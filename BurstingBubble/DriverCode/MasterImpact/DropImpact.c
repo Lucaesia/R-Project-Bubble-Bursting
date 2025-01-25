@@ -12,6 +12,7 @@
 #include "view.h"                    // need to make the animations
 #include "draw.h"                    // visualisation helper
 #include "tag.h"                     // helps track droplet properties
+#include <omp.h>
 
 // Dimensional quantities (to be passed as arguments in main below)
 double rhoLiquid; // liquid phase density (kg/m^3)
@@ -161,11 +162,16 @@ event init (t = 0.0) {
   filmHeight = -domainSize/2. + poolHeight;
 
   // Strong refinement around the interfacial regions
-  refine (((sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) < sq(1.0*1.05) && sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) > sq(1.0*0.95)) || fabs(x - filmHeight) <= 0.005) && level < maxLevel);
-  
+  refine (((sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) < sq(1.0*1.05) && sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) > sq(1.0*0.95)) || fabs(x - filmHeight) <= 0.005) && level < maxLevel);
+  /*  
+  A = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) < sq(1.0*1.05)  ## Ball at 1.5 above film with radius 1.05
+  B = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) > sq(1.0*0.95)) ## outside Ball at 1.5 above film with radius 0.95
+  C  = fabs(x - filmHeight) <= 0.005) ## interface
+  && intersect
+  */
   // Create active liquid phase as union between drop and film
-  fraction (f1, sq(1.0) - sq(x - (filmHeight + 1.0 + 0.5)) - sq(y));
-  fraction (f2, - x + filmHeight);
+  fraction (f1, -(sq(1.0) - sq(x - (filmHeight - 1.0 + 0.1)) - sq(y)) || -(- x + filmHeight));
+  fraction (f2, (- x + filmHeight+7));
   
   // Initialise uniform velocity field inside droplet
   foreach()
@@ -184,14 +190,14 @@ event adapt (i++) {
 
 }
 
-event gfsview (t = 0.0; t += 0.1; t <= tEnd) {
+/* event gfsview (t = 0.0; t += 0.1; t <= tEnd) {
     char name_gfs[200];
     sprintf(name_gfs,"Slices/DropImpact-%0.1f.gfs",t);
 
     FILE* fp_gfs = fopen (name_gfs, "w");
     output_gfs(fp_gfs);
     fclose(fp_gfs);
-}
+} */
 
 event saveInterfaces (t += 0.1) {
 
@@ -212,7 +218,7 @@ event saveInterfaces (t += 0.1) {
     fclose(fp2);
 }
 
-event extractPressureData (t = 0.0; t += 0.1) {
+/* event extractPressureData (t = 0.0; t += 0.1) {
 
   char namePressureData[200];
 
@@ -229,7 +235,7 @@ event extractPressureData (t = 0.0; t += 0.1) {
 
   fclose(fpPressureData);
 
-}
+} */
 
 // Fluid volume metrics
 event droplets (t += 0.01)
@@ -264,7 +270,7 @@ event droplets (t += 0.01)
 
 
 // Output animations
-event movies (t += 0.05){
+event movies (t += 0.2; t <= tEnd){
 
   char timestring[100];
   
@@ -293,7 +299,7 @@ event movies (t += 0.05){
   
   save ("Animations/ImpactSummary.mp4");
 
-  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
+  /* view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
   clear();
   
   draw_vof("f1", lw=2);
@@ -308,9 +314,9 @@ event movies (t += 0.05){
   sprintf(timestring, "t=%2.03f",t);
   draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
   
-  save ("Animations/ImpactVelocities.mp4");
+  save ("Animations/ImpactVelocities.mp4"); */
 
-  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
+  /* view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
   clear();
   
   draw_vof("f1", lw=2);
@@ -325,7 +331,7 @@ event movies (t += 0.05){
   sprintf(timestring, "t=%2.03f",t);
   draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
   
-  save ("Animations/ImpactPVort.mp4");
+  save ("Animations/ImpactPVort.mp4"); */
 
 }
 
