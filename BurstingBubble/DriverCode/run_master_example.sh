@@ -4,10 +4,10 @@
 # Date: 26/09/2022
 
 # removes previous runs
-rm -r Water*/
+
 # Additional velocities or resolution levels can be added below
 for V0 in 0.3855; do
-	for LEVEL in 7; do
+	for LEVEL in 10; do
 
 		# Copy all files to renamed folder based on key parameters
 		cp -r MasterImpact/ Water-V$V0-Level$LEVEL
@@ -17,7 +17,7 @@ for V0 in 0.3855; do
 		qcc -O2 -w -fopenmp -Wall DropImpact.c -lm -o DropImpact -L$BASILISK/gl -lglutils -lfb_tiny
 
 		# Specify parallelisation features		
-		export OMP_NUM_THREADS=4
+		export OMP_NUM_THREADS=2
 		
 		# parameters:
 		# 1. rho liquid (dimensional)

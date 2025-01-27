@@ -119,7 +119,7 @@ int main(int argc, char * argv[]) {
   mu2 = mu_ratio*mu1;
   
   f1.sigma = 1./ND_Weber;
-  f2.sigma = 1./ND_Weber;
+  //f2.sigma = 1./ND_Weber;
 
   a = av;
 
@@ -170,13 +170,14 @@ event init (t = 0.0) {
   && intersect
   */
   // Create active liquid phase as union between drop and film
-  fraction (f1, -(sq(1.0) - sq(x - (filmHeight - 1.0 + 0.1)) - sq(y)) || -(- x + filmHeight));
-  fraction (f2, (- x + filmHeight+7));
+  fraction (f1, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
+  //fraction (f2, (- x + filmHeight));
   
   // Initialise uniform velocity field inside droplet
   foreach()
   {
-  	u.x[] = -1.0*f1[];
+    fprintf(fp_stats, "x=%g, y=%g, f1=%d\n",x,y,0<((-sq(1.0) + sq(x - (filmHeight)) + sq(y)) && (+ x - filmHeight) ));
+  	u.x[] = 0.0*f1[];
         u.y[] = 0.0;
         p[] = 0.0;
 	omega[] = 0.0;
@@ -186,7 +187,7 @@ event init (t = 0.0) {
 event adapt (i++) {
 
   // Refine only with respect to interfacial shape(s) location and velocity component magnitude
-  adapt_wavelet ((scalar *){f1, f2, u}, (double[]){1e-5, 1e-5, 1e-3, 1e-3}, maxLevel, minLevel);
+  adapt_wavelet ((scalar *){f1, u}, (double[]){1e-5, 1e-5, 1e-3, 1e-3}, maxLevel, minLevel);
 
 }
 
@@ -209,13 +210,13 @@ event saveInterfaces (t += 0.1) {
     output_facets (f1, fp1);	
     fclose(fp1);
 
-    char nameInterfaces2[200];
+    /* char nameInterfaces2[200];
 
     sprintf(nameInterfaces2,"Interfaces/interfacePool-%0.1f.dat",t);
 
     FILE * fp2 = fopen(nameInterfaces2, "w");
     output_facets (f2, fp2);	
-    fclose(fp2);
+    fclose(fp2); */
 }
 
 /* event extractPressureData (t = 0.0; t += 0.1) {
@@ -270,14 +271,14 @@ event droplets (t += 0.01)
 
 
 // Output animations
-event movies (t += 0.2; t <= tEnd){
+event movies (t += 0.01; t <= tEnd){
 
   char timestring[100];
   
   foreach(){
 	omega[] = (u.y[1,0] - u.y[-1,0])/(2.*Delta) - (u.x[0,1] - u.x[0,-1])/(2.*Delta);
         velnorm[] = sqrt(sq(u.x[]) + sq(u.y[]));
-  	viewingfield[] = 1.0 - f1[] - 0.5*f2[];
+  	viewingfield[] = 1.0 - f1[];// - 0.5*f2[];
   	mylevel[] = level;
   }
 
@@ -285,11 +286,11 @@ event movies (t += 0.2; t <= tEnd){
 	
   clear();
   draw_vof("f1", lw=2);
-  draw_vof("f2", lw=2);
+  //draw_vof("f2", lw=2);
   squares("viewingfield", map = cool_warm, min = -0.5, max = 2.5);
   mirror({0,1}) {
 	draw_vof("f1", lw=2);
-	draw_vof("f2", lw=2);		
+	//draw_vof("f2", lw=2);		
 	cells(lw=0.5);
 	squares("mylevel", map = cool_warm, min = minLevel, max = maxLevel);
   } 
