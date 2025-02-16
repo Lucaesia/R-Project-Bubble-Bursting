@@ -5,7 +5,7 @@
 #include "navier-stokes/centered.h"  // solve NS equations
 #define FILTERED                     // Smear density and viscosity jumps
 #define mu(f)  (1./(clamp(f,0,1)*(1./mu1 - 1./mu2) + 1./mu2))
-#include "two-phaseDOD.h"
+#include "two-phase.h"
 #include "tension.h"                 // include surface tension between phases
 #include "vof.h"                     // solve using VoF method
 #include "fractions.h"               // initially defined fraction of fluid phases
@@ -118,7 +118,7 @@ int main(int argc, char * argv[]) {
   mu1 = 1./ND_Reynolds;
   mu2 = mu_ratio*mu1;
   
-  f1.sigma = 1./ND_Weber;
+  f.sigma = 1./ND_Weber;
   //f2.sigma = 1./ND_Weber;
 
   a = av;
@@ -170,14 +170,14 @@ event init (t = 0.0) {
   && intersect
   */
   // Create active liquid phase as union between drop and film
-  fraction (f1, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
+  fraction (f, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
   //fraction (f2, (- x + filmHeight));
   
   // Initialise uniform velocity field inside droplet
   foreach()
   {
-    fprintf(fp_stats, "x=%g, y=%g, f1=%d\n",x,y,0<((-sq(1.0) + sq(x - (filmHeight)) + sq(y)) && (+ x - filmHeight) ));
-  	u.x[] = 0.0*f1[];
+    fprintf(fp_stats, "x=%g, y=%g, f=%d\n",x,y,0<((-sq(1.0) + sq(x - (filmHeight)) + sq(y)) && (+ x - filmHeight) ));
+  	u.x[] = 0.0*f[];
         u.y[] = 0.0;
         p[] = 0.0;
 	omega[] = 0.0;
@@ -187,7 +187,7 @@ event init (t = 0.0) {
 event adapt (i++) {
 
   // Refine only with respect to interfacial shape(s) location and velocity component magnitude
-  adapt_wavelet ((scalar *){f1, u}, (double[]){1e-5, 1e-5, 1e-3, 1e-3}, maxLevel, minLevel);
+  adapt_wavelet ((scalar *){f, u}, (double[]){1e-5, 1e-3, 1e-3}, maxLevel, minLevel);
 
 }
 
@@ -207,7 +207,7 @@ event saveInterfaces (t += 0.1) {
     sprintf(nameInterfaces1,"Interfaces/interfaceDrop-%0.1f.dat",t);
 
     FILE * fp1 = fopen(nameInterfaces1, "w");
-    output_facets (f1, fp1);	
+    output_facets (f, fp1);	
     fclose(fp1);
 
     /* char nameInterfaces2[200];
@@ -243,7 +243,7 @@ event droplets (t += 0.01)
 {
   scalar m[];
   foreach()
-    m[] = f1[] > 1e-2;
+    m[] = f[] > 1e-2;
   int n = tag (m);
 
   double v[n];
@@ -253,10 +253,10 @@ event droplets (t += 0.01)
   foreach_leaf()
     if (m[] > 0) {
       int j = m[] - 1;
-      v[j] += dv()*f1[];
+      v[j] += dv()*f[];
       coord p = {x,y,z};
       foreach_dimension()
-	b[j].x += dv()*f1[]*p.x;
+	b[j].x += dv()*f[]*p.x;
     }
 
   #if _MPI
@@ -278,18 +278,18 @@ event movies (t += 0.01; t <= tEnd){
   foreach(){
 	omega[] = (u.y[1,0] - u.y[-1,0])/(2.*Delta) - (u.x[0,1] - u.x[0,-1])/(2.*Delta);
         velnorm[] = sqrt(sq(u.x[]) + sq(u.y[]));
-  	viewingfield[] = 1.0 - f1[];// - 0.5*f2[];
+  	viewingfield[] = 1.0 - f[];// - 0.5*f2[];
   	mylevel[] = level;
   }
 
   view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
 	
   clear();
-  draw_vof("f1", lw=2);
+  draw_vof("f", lw=2);
   //draw_vof("f2", lw=2);
   squares("viewingfield", map = cool_warm, min = -0.5, max = 2.5);
   mirror({0,1}) {
-	draw_vof("f1", lw=2);
+	draw_vof("f", lw=2);
 	//draw_vof("f2", lw=2);		
 	cells(lw=0.5);
 	squares("mylevel", map = cool_warm, min = minLevel, max = maxLevel);
@@ -303,11 +303,11 @@ event movies (t += 0.01; t <= tEnd){
   /* view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
   clear();
   
-  draw_vof("f1", lw=2);
+  draw_vof("f", lw=2);
   draw_vof("f2", lw=2);
   squares("u.x", map = cool_warm, min = -1., max = 0.5,);
   mirror({0,1}) {
-	draw_vof("f1", lw=2);
+	draw_vof("f", lw=2);
 	draw_vof("f2", lw=2);		
 	squares("u.y", map = cool_warm, min = -0.5, max = 2.);
   } 
@@ -320,11 +320,11 @@ event movies (t += 0.01; t <= tEnd){
   /* view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
   clear();
   
-  draw_vof("f1", lw=2);
+  draw_vof("f", lw=2);
   draw_vof("f2", lw=2);
   squares("omega", map = cool_warm, min = -3., max = 3.);
   mirror({0,1}) {
-	draw_vof("f1", lw=2);
+	draw_vof("f", lw=2);
 	draw_vof("f2", lw=2);	
 	squares("p", map = cool_warm, min = -0.25, max = 4.0);
   } 

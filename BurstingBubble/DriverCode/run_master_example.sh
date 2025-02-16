@@ -6,12 +6,12 @@
 # removes previous runs
 
 # Additional velocities or resolution levels can be added below
-for V0 in 0.3855; do
-	for LEVEL in 10; do
+for R in 0.007, 0.0065 ; do
+	for LEVEL in 8; do
 
 		# Copy all files to renamed folder based on key parameters
-		cp -r MasterImpact/ Water-V$V0-Level$LEVEL
-		cd Water-V$V0-Level$LEVEL/
+		cp -r MasterImpact/ Water-R$R-Level$LEVEL
+		cd Water-R$R-Level$LEVEL/
 		
 		# Compile code to create the executable (including visualisation)
 		qcc -O2 -w -fopenmp -Wall DropImpact.c -lm -o DropImpact -L$BASILISK/gl -lglutils -lfb_tiny
@@ -32,7 +32,7 @@ for V0 in 0.3855; do
 		# 10. max level
 
 		# Run executable ./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 0.35e-3 0.3855 6.0 5
-		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 0.35e-3 $V0 2.0 $LEVEL
+		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 2.0 $LEVEL
 		
 		cd ..
 	done
