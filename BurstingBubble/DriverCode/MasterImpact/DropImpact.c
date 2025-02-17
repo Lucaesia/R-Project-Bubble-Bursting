@@ -41,6 +41,8 @@ face vector av[];
 FILE * fp_stats;
 FILE * fp_vol;
 FILE * fp_droplets;
+FILE * fp_jet_vel;
+FILE * fp_jet_eject;
 
 double ND_Weber;
 double ND_Reynolds;
@@ -49,6 +51,9 @@ double ND_Bond;
 double ND_Ohnesorge;
 
 double filmHeight;
+
+double max_height = -domainSize;
+int num_jets = 0;
 
 int minLevel = 6;
 int maxLevel; // = 11;
@@ -137,6 +142,18 @@ int main(int argc, char * argv[]) {
     fp_droplets = fopen(name, "w");
   }
 
+  // Pointer of the file to jet velocity
+  {
+    char name[200];
+    sprintf(name, "jet_vel.dat");
+    fp_jet_vel = fopen(name, "w");
+  }
+
+  {
+    char name[200];
+    sprintf(name, "jet_eject.dat");
+    fp_jet_eject = fopen(name, "w");
+  }
   DT = 1e-2;
   NITERMIN = 1; // default 1
   NITERMAX = 200; // default 100
@@ -146,6 +163,8 @@ int main(int argc, char * argv[]) {
 
   fclose(fp_stats);
   fclose(fp_droplets);
+  fclose(fp_jet_vel);
+  fclose(fp_jet_eject);
 }
 
 event acceleration (i++) {
@@ -155,10 +174,41 @@ event acceleration (i++) {
     av.y[] += 0.0;
 }
 
+event ejection (i++) {
+  int state = 0;
+  int saved_state = 0;
+  int changes = 0;
+  double gap_num = 1000;
+  double gap = domainSize/gap_num;
+  for (double j=-domainSize/2 + 0.000001;j<domainSize/2; j+= gap){
+    if (interpolate(f, j,0)>0.5){
+      state = 1;
+    }
+    else{
+      state = 0;
+    }
+    if (state != saved_state){
+      changes += 1;
+      saved_state = state;
+    }
+  }
+  if (1 == saved_state){
+    changes += 1;
+    saved_state = state;
+  }
+  changes = changes/2;
+  if (num_jets < changes){
+    fprintf(fp_jet_eject,"%d Droplets seperated at time: %g", changes-num_jets,t);
+  }
+  else if( num_jets > changes){
+    fprintf(fp_jet_eject,"%d Droplets disappeared at time: %g", num_jets-changes,t);
+  }
+
+}
+
 scalar omega[], viewingfield[], mylevel[], velnorm[];
 
 event init (t = 0.0) {
-
   filmHeight = -domainSize/2. + poolHeight;
 
   // Strong refinement around the interfacial regions
@@ -176,7 +226,7 @@ event init (t = 0.0) {
   // Initialise uniform velocity field inside droplet
   foreach()
   {
-    fprintf(fp_stats, "x=%g, y=%g, f=%d\n",x,y,0<((-sq(1.0) + sq(x - (filmHeight)) + sq(y)) && (+ x - filmHeight) ));
+    
   	u.x[] = 0.0*f[];
         u.y[] = 0.0;
         p[] = 0.0;
@@ -191,6 +241,21 @@ event adapt (i++) {
 
 }
 
+event eject_velocity (i++) {
+  double temp,jet_vel;
+  double gap_num = 1000;
+  double gap = domainSize/gap_num;
+  for (double j=-domainSize/2 + TOLERANCE;j<domainSize/2; j+= gap){
+    if (interpolate(f, j,0)>0.5){
+      temp = j;
+    }
+  } // int j
+    
+  jet_vel = (temp - max_height)/dt;
+  max_height = temp;
+  fprintf(fp_jet_vel,"%g %g\n",max_height,jet_vel);
+}
+
 /* event gfsview (t = 0.0; t += 0.1; t <= tEnd) {
     char name_gfs[200];
     sprintf(name_gfs,"Slices/DropImpact-%0.1f.gfs",t);
@@ -200,8 +265,7 @@ event adapt (i++) {
     fclose(fp_gfs);
 } */
 
-event saveInterfaces (t += 0.1) {
-
+event saveInterfaces (t = 0.0; t += 0.1; t <= tEnd) {
     char nameInterfaces1[200];
 
     sprintf(nameInterfaces1,"Interfaces/interfaceDrop-%0.1f.dat",t);
@@ -271,7 +335,7 @@ event droplets (t += 0.01)
 
 
 // Output animations
-event movies (t += 0.01; t <= tEnd){
+/* event movies (t += 0.01; t <= tEnd){
 
   char timestring[100];
   
@@ -300,7 +364,7 @@ event movies (t += 0.01; t <= tEnd){
   
   save ("Animations/ImpactSummary.mp4");
 
-  /* view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
+  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
   clear();
   
   draw_vof("f", lw=2);
@@ -315,9 +379,9 @@ event movies (t += 0.01; t <= tEnd){
   sprintf(timestring, "t=%2.03f",t);
   draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
   
-  save ("Animations/ImpactVelocities.mp4"); */
+  save ("Animations/ImpactVelocities.mp4"); 
 
-  /* view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
+  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
   clear();
   
   draw_vof("f", lw=2);
@@ -332,9 +396,9 @@ event movies (t += 0.01; t <= tEnd){
   sprintf(timestring, "t=%2.03f",t);
   draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
   
-  save ("Animations/ImpactPVort.mp4"); */
+  save ("Animations/ImpactPVort.mp4"); 
 
-}
+} */
 
 event logstats (t += 0.01) {
 

@@ -4,9 +4,9 @@
 # Date: 26/09/2022
 
 # removes previous runs
-
+rm -r Water-R0.0071-Level8
 # Additional velocities or resolution levels can be added below
-for R in 0.007, 0.0065 ; do
+for R in 0.0071 ; do
 	for LEVEL in 8; do
 
 		# Copy all files to renamed folder based on key parameters
@@ -32,7 +32,7 @@ for R in 0.007, 0.0065 ; do
 		# 10. max level
 
 		# Run executable ./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 0.35e-3 0.3855 6.0 5
-		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 2.0 $LEVEL
+		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 4.0 $LEVEL
 		
 		cd ..
 	done
