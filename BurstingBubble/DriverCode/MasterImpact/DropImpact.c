@@ -181,7 +181,7 @@ event ejection (i++) {
   double gap_num = 1000;
   double gap = domainSize/gap_num;
   for (double j=-domainSize/2 + 0.000001;j<domainSize/2; j+= gap){
-    if (interpolate(f, j,0)>0.5){
+    if (interpolate(f, j,0)<0.5){
       state = 1;
     }
     else{
@@ -198,10 +198,12 @@ event ejection (i++) {
   }
   changes = changes/2;
   if (num_jets < changes){
-    fprintf(fp_jet_eject,"%d Droplets seperated at time: %g", changes-num_jets,t);
+    fprintf(fp_jet_eject,"%d Droplets seperated at time: %g\n", changes-num_jets,t);
+    num_jets = changes;
   }
   else if( num_jets > changes){
-    fprintf(fp_jet_eject,"%d Droplets disappeared at time: %g", num_jets-changes,t);
+    fprintf(fp_jet_eject,"%d Droplets disappeared at time: %g\n", num_jets-changes,t);
+    num_jets
   }
 
 }

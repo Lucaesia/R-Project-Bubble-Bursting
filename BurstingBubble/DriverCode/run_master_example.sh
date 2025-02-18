@@ -4,18 +4,18 @@
 # Date: 26/09/2022
 
 # removes previous runs
-rm -r Water-R0.0071-Level8
+# rm -r Water-R0.0071-Level8
 # Additional velocities or resolution levels can be added below
-for R in 0.0071 ; do
+for R in 0.0031 ; do
 	for LEVEL in 8; do
 
 		# Copy all files to renamed folder based on key parameters
 		cp -r MasterImpact/ Water-R$R-Level$LEVEL
 		cd Water-R$R-Level$LEVEL/
-		
+		echo "COMPILING R: $R  LEVEL: $LEVEL"
 		# Compile code to create the executable (including visualisation)
 		qcc -O2 -w -fopenmp -Wall DropImpact.c -lm -o DropImpact -L$BASILISK/gl -lglutils -lfb_tiny
-
+    echo "RUNNING R: $R  LEVEL: $LEVEL"
 		# Specify parallelisation features		
 		export OMP_NUM_THREADS=2
 		
@@ -32,7 +32,7 @@ for R in 0.0071 ; do
 		# 10. max level
 
 		# Run executable ./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 0.35e-3 0.3855 6.0 5
-		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 4.0 $LEVEL
+		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 10.0 $LEVEL
 		
 		cd ..
 	done

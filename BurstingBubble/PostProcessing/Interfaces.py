@@ -11,8 +11,10 @@ dt = 0.1
 total_points = 0
 while total_points==0:
     # finds file name and exits loop once finished
-
-    file_name = "../DriverCode/Water-R0.0071-Level8/Interfaces/interfaceDrop-3.5.dat"
+    R = 0.0071
+    Level = 8
+    t = 10.0
+    file_name = "../DriverCode/Water-R0.0031-Level8/Interfaces/interfaceDrop-9.5.dat"
     try:
         data = np.loadtxt(file_name, delimiter=' ', usecols=(0,1), unpack=False)
     except FileNotFoundError:
@@ -32,7 +34,8 @@ lines = data_mirrored.reshape((len(data_mirrored)//2,2,2))
 line_collection = mc.LineCollection(lines)
 
 # plots and saves graphs
-fig, ax = plt.subplots(figsize=(6.4, 3.2))
+scale=1
+fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
 # set axes limits manually because Collections do not take part in autoscaling
 ax.set_xlim(-5, 5)
 ax.set_ylim(-5, 5)
