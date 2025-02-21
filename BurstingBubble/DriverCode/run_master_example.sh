@@ -34,7 +34,7 @@ for R in 0.0031 ; do
 		# 10. max level
 
 		# Run executable ./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 0.35e-3 0.3855 6.0 5
-		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 0.5 $LEVEL
+		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 8.5 $LEVEL
 		
 		cd ..
 	done

@@ -52,7 +52,7 @@ double ND_Ohnesorge;
 
 double filmHeight;
 
-double max_height = -domainSize;
+double max_height = -0.901;
 int num_jets = 0;
 
 int minLevel = 6;
@@ -243,47 +243,37 @@ event adapt (i++) {
 
 }
 
-event eject_velocity (i++) {
+ event eject_velocity (i++) {
   double jet_vel;
-  double temp = -domainSize;
-  double gap_num = 100000;
-  double gap = domainSize/gap_num;
-  for (double j=-domainSize/2 + TOLERANCE;j<domainSize/2; j+= gap){
-    if (interpolate(f, j,0)>0.5){
-      temp = j;
-    }
-  } // int j
+  double temp = max_height;
+  double gap = 1e-2;
+  
+  if (interpolate(f, max_height,0)>0.5){
+
+    for (double j=max_height;j<max_height+0.5; j+= gap){
+      if (interpolate(f, j,0)<0.5){
+        temp = j-gap;
+        break;
+      }
+    } // int j
+  }
+  else{
+    for (double j=max_height;j>max_height-0.5; j-= gap){
+      if (interpolate(f, j,0)>0.5){
+        temp = j+gap;
+        break;
+      }
+    } // int j
+  }
+  
     
   jet_vel = (temp - max_height)/dt;
   max_height = temp;
-  //fprintf(fp_jet_vel,"0 %g %g %g\n",max_height,jet_vel,t);
-  temp = -domainSize;
-  foreach(reduction(max:temp)){
-    if (f[]>0.5 && x>temp && abs(y)<0.1){
-      temp = x;
-    }
-  }
-  //fprintf(fp_jet_vel,"1 %g 4 %g\n", temp,t);
+  
+  fprintf(fp_jet_vel,"%g %g %g %g\n", temp,interpolate(u.x,temp,0),jet_vel,t);
 
-  vector h[];
-  heights (f, h);
-  foreach (serial) {
-  for (int i = -1; i <= 1; i++) {
-      if (h.x[0,i] != nodata)
-	      fprintf (fp_jet_vel, "%g %g %g %g hx\n", x, y + i*Delta, height(h.x[0,i]), Delta);
-      //if (h.y[i] != nodata)
-	    //fprintf (fp_jet_vel, "%g %g %g %g hy\n", x + i*Delta, y, height(h.y[i]), Delta);
-    }
 
-  }
-
-  stats s = statsf (h.x);
-  fprintf (stderr, "kappa min: %g avg: %g stddev: %g max: %g\n",
-	   s.min, s.sum/s.volume, s.stddev, s.max);
-
-  printf("eeg\n");
-  exit(1);
-}
+} 
 
 /* event gfsview (t = 0.0; t += 0.1; t <= tEnd) {
     char name_gfs[200];

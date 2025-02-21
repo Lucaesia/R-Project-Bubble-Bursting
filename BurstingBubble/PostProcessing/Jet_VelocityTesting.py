@@ -35,12 +35,18 @@ scale=1
 fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
 # set axes limits manually because Collections do not take part in autoscaling
 
-ax.set_aspect("equal")  # to make the arcs look circular
+#ax.set_aspect("equal")  # to make the arcs look circular
+ax.set_ylim([-1,5])
 
 
 
-print(jet_vel[0,:])
-ax.scatter(jet_vel[:,1],jet_vel[:,0])
+ax.plot(jet_vel[:,3],jet_vel[:,2])
+ax.plot(jet_vel[:,3],jet_vel[:,1], label="interpolated vel")
+
+plt.legend()
 
 plt.savefig('interface.png')
+plt.clf() 
+ax.plot(jet_vel[:,3],jet_vel[:,0])
+plt.savefig('interface2.png')
 plt.clf() 
