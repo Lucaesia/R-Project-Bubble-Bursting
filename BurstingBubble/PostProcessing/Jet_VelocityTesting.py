@@ -1,6 +1,6 @@
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib import collections  as mc
+import numpy as np # type: ignore
+from matplotlib import pyplot as plt # type: ignore
+from matplotlib import collections  as mc # type: ignore
 
 
 # sets time inverval between files
@@ -45,8 +45,15 @@ ax.plot(jet_vel[:,3],jet_vel[:,1], label="interpolated vel")
 
 plt.legend()
 
-plt.savefig('interface.png')
-plt.clf() 
+plt.savefig('outputs/interface.png')
+plt.clf()
+
+scale=1
+fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
+# set axes limits manually because Collections do not take part in autoscaling
+
+#ax.set_aspect("equal")  # to make the arcs look circular
+ax.set_ylim([-4,5])
 ax.plot(jet_vel[:,3],jet_vel[:,0])
-plt.savefig('interface2.png')
+plt.savefig('outputs/interface2.png')
 plt.clf() 
