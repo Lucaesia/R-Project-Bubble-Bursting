@@ -48,9 +48,11 @@ while True:
 
     ax.add_collection(line_collection)
 
-
-    plt.savefig('outputs/interface'+string+'.png')
+    string2 = "%03d" % total_points
+    print(string2)
+    plt.savefig('outputs/interface'+string2+'.png')
     plt.clf() 
+    plt.close()
    
     total_points+=1
 

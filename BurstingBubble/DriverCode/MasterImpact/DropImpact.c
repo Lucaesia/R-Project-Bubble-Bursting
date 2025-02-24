@@ -246,7 +246,7 @@ event adapt (i++) {
  event eject_velocity (i++) {
   double jet_vel;
   double temp = max_height;
-  double gap = 1e-2;
+  double gap = 1e-6;
   
   if (interpolate(f, max_height,0)>0.5){
 
