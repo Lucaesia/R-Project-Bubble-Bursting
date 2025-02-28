@@ -28,7 +28,7 @@ for region (B),
 for region (C) where $\gamma$ represents surface tension of the liquid, $g$ is acceleration due to gravity, $\rho$ and $\rho'$ are the densities of the liquid and gas respectively, $p$ and $p_0$ are the gas pressure inside and outside the bubble respectively, $g$ is acceleration due to gravity and $z$ is the height above the still gas liquid interface in the far field. $R_1$ and $R_2$ are the principle radii of curvature of the surface at a point.
 
 In order to calculate what $R_1$ and $R_2$ are we need to use some differential geometry. We assume the bubble can be described by a surfaces of revolution.
-Let $\gamma$ be a curve that lies in the plane $(x,z)$ and let its equation have the equation $z=f(x)$. We then denote $\Phi$ as the surface defined by a rotation of $\gamma$ around the $z$-axis or axis of rotation. This surface can then be written in the form:
+Let $\Gamma$ be a curve that lies in the plane $(x,z)$ and let its equation have the equation $z=f(x)$. We then denote $\Phi$ as the surface defined by a rotation of $\Gamma$ around the $z$-axis or axis of rotation. This surface can then be written in the form:
 \begin{align}
     z=f(\sqrt{x^2+y^2})=f(r) && r=\sqrt{x^2+y^2}
 \end{align}
@@ -57,12 +57,12 @@ We then obtain the principle curvatures $\kappa_1$ and $\kappa_2$ satisfy:
 \begin{align}
     (EG-F^2)\kappa^2 - (EN+GL -2MF)\kappa +LN-M^2 = 0.
 \end{align}
-Substituting in our coefficients for the first and second fundamental forms, solving for $K$ and noting radius of curvature is one over the curvature we obtain:
+Substituting in our coefficients for the first and second fundamental forms, solving for $\kappa$ and noting radius of curvature is one over the curvature we obtain:
 \begin{align}
-    \frac{1}{K_1} =\kappa_1= \frac{L}{E}=\frac{f''}{(1+(f')^2)^{\frac{3}{2}}}, && \frac{1}{K_2} = \kappa_2 = \frac{N}{G} = \frac{f'}{x \sqrt{1+(f')^2}}
+    \frac{1}{R_1} =\kappa_1= \frac{L}{E}=\frac{f''}{(1+(f')^2)^{\frac{3}{2}}}, && \frac{1}{R_2} = \kappa_2 = \frac{N}{G} = \frac{f'}{x \sqrt{1+(f')^2}}
 \end{align}
-Notice that $K_1$ is exactly the curvature of the meridian curve $\gamma$
-We now introduce the variable $\phi$ defined to be the angle at which the tangent to $\gamma$ makes with the x-axis. 
+Notice that $R_1$ is exactly the radius of curvature of the meridian curve $\Gamma$
+We now introduce the variable $\phi$ defined to be the angle at which the tangent to $\Gamma$ makes with the x-axis. 
 \begin{figure}[hb]
     \centering
     \includegraphics[width=0.55\linewidth]{WriteUp/images/tangent to bubble extra.png}
@@ -77,15 +77,36 @@ We can calculate $phi$ using simple trigonometry to be $\phi=\arctan(f'(x))$. We
     \frac{f'(x)}{\sqrt{1+f'(x)^2}}&=\sin\phi\\
     \frac{d}{dx} \frac{f'(x)}{\sqrt{1+f'(x)^2}}&=\frac{d}{dx}\sin\phi \\
     \frac{f''(x)}{(1+f'(x)^2)}&=\frac{d(\sin\phi)}{dx} \\
-    \frac{1}{K_1}&=\frac{d(\sin\phi)}{dx}
+    \frac{1}{R_1}&=\frac{d(\sin\phi)}{dx}
 \end{align}
-Allowing us to obtain $K_1$ in terms of $\phi$.
-We can also write $K_2$ in terms of $\phi$ by considering the normal to the curve at a point $(x,f(x))$. An equation for this normal is given by
+Allowing us to obtain $R_1$ in terms of $\phi$.
+We can also write $R_2$ in terms of $\phi$ by considering the normal to the curve at a point $(x,f(x))$. An equation for this normal is given by
 \begin{align}
     (\bar{x}-x) + f'(x)(\bar{z}-f(x))=0
 \end{align}
 where $(\bar{x},\bar{z})$ are the coordinates of points on the straight line. We can the find the intersection of this line with the $z$-axis, $(0,\frac{x+ff'}{f'})$.
-Finding the distance between this point and $(x,f)$ gives
+Finding the distance $R$ between this point and $(x,f)$ gives
 \begin{align}
-    \sqrt{x^2+(\frac{x+ff'}{f'}-f)^2}=\frac{x\sqrt{1+(f')^2}}{|f'|}.
+    R=\sqrt{x^2+(\frac{x+ff'}{f'}-f)^2}=\frac{x\sqrt{1+(f')^2}}{|f'|}=R_2.
 \end{align}
+We can then use trigonometry to calculate $R$ in terms of $\phi$:
+\begin{align}
+    R=\frac{x}{\cos(\frac{\pi}{2}-\phi)}=\frac{x}{\sin(\phi)}.
+\end{align}
+Combining these all together we obtain
+\begin{align}
+    \frac{1}{R_1}&=\frac{d(\sin(\phi))}{dx},\\
+    \frac{1}{R_2}&=\frac{\sin(\phi)}{x},\\
+    \frac{dz}{dx} &= \tan(\phi).
+\end{align}
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.55\linewidth]{WriteUp/images/angles and trig.png}
+    \caption{A bubble floating at a surface}
+    \label{fig:4}
+\end{figure}
+We now introduce a capillary constant $a^2$ having dimension of square length and defined by the equation
+\begin{align}
+    \frac{(\rho-\rho')g}{\gamma} = \frac{2}{a^2}
+\end{align}
+transform $x$, $z$, $R_0$, etc. to dimensionless quantities $\bar{x}$, $\bar{z}$, $\bar{R_0}$, etc. by
