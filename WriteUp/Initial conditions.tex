@@ -14,15 +14,15 @@ We are considering the case where the fluid is stationary, i.e. $\bf{u} = \bf{0}
 \end{figure}
 
 We can divide the surface of a bubble into three regions: (A) the submerged portion of the interface, (B) the thin film over the top of the bubble separating the two gas regions, (C) the regions of the interface trailing away from the border of the thin film. We neglect the thickness of the film means we can ignore the weight of the film. Adding that the difference between the gas pressures inside and out of the bubble is uniform, the thin film can be treated as a spherical surface of radius $R_0$. The force balance equations at any point on these surfaces are,
-\begin{align}
+\begin{align}\label{A_untransformed}
     (\rho-\rho')gz = \gamma(\frac{1}{R_1}+\frac{1}{R_2}-\frac{4}{R_0})
 \end{align}
 for region (A),
-\begin{align}
+\begin{align}\label{B_untransformed}
     p=p_0 + \frac{4\gamma}{R_0}
 \end{align}
 for region (B),
-\begin{align}
+\begin{align}\label{C_untransformed}
     (\rho-\rho')gz = \gamma(\frac{1}{R_1}+\frac{1}{R_2})
 \end{align}
 for region (C) where $\gamma$ represents surface tension of the liquid, $g$ is acceleration due to gravity, $\rho$ and $\rho'$ are the densities of the liquid and gas respectively, $p$ and $p_0$ are the gas pressure inside and outside the bubble respectively, $g$ is acceleration due to gravity and $z$ is the height above the still gas liquid interface in the far field. $R_1$ and $R_2$ are the principle radii of curvature of the surface at a point.
@@ -69,17 +69,34 @@ We now introduce the variable $\phi$ defined to be the angle at which the tangen
     \caption{A bubble floating at a surface}
     \label{fig:1}
 \end{figure}
-We can calculate $phi$ using simple trigonometry to be $\phi=\arctan(f'(x))$. We then consider:
+We can calculate $\phi$ using simple trigonometry to be $\phi=\arctan(f'(x))$. We then consider:
 \begin{align}
     f'(x)=\tan \phi &= \frac{\sin\phi}{\cos\phi} \\
     &=\sin\phi\sec\phi \\
     &=\sin\phi \sqrt{1+\tan^2\phi}\\
     \frac{f'(x)}{\sqrt{1+f'(x)^2}}&=\sin\phi\\
     \frac{d}{dx} \frac{f'(x)}{\sqrt{1+f'(x)^2}}&=\frac{d}{dx}\sin\phi \\
-    \frac{f''(x)}{(1+f'(x)^2)}&=\frac{d(\sin\phi)}{dx} \\
+    \frac{f''(x)}{(1+f'(x)^2)^{\frac{3}{2}}}&=\frac{d(\sin\phi)}{dx} \\
     \frac{1}{R_1}&=\frac{d(\sin\phi)}{dx}
 \end{align}
-Allowing us to obtain $R_1$ in terms of $\phi$.
+Allowing us to obtain $R_1$ in terms of $\phi$. reparametrising the curve in terms of $z$, i.e. considering the curve given by $(g(z),z)$ where $g(z)=f^{-1}(z)$, we can find another expression for $R_1$. using the facts,
+\begin{align}
+    f'(x)=\frac{1}{g'(f(x))}, && f''(x) = \frac{-g''(f(x))}{g'(f(x))^3}
+\end{align}
+We can write the curvature in terms of $z$:
+\begin{align}
+    \frac{f''(x)}{(1+f'(x)^2)^{\frac{3}{2}}}=\frac{-\frac{g''(f(x))}{g'(f(x))^3}}{(1+\frac{1}{g'(f(x))})} = \frac{-g''(f(x))}{(g'(f(x))^2+1)^{\frac{3}{2}}} = \frac{-g''(z)}{(g'(z)+1)^{\frac{3}{2}}}
+\end{align}
+Now we can consider,
+\begin{align}
+    f'(x)=\frac{1}{g'(f(x))}=\tan \phi &= \frac{\sin\phi}{\cos\phi} \\
+    g'(z)&=\cos\phi\csc\phi \\
+    &=\sin\phi \sqrt{1+\cot^2\phi}\\
+    \frac{g'(z)}{\sqrt{1+g'(z)^2}}&=\cos\phi\\
+    \frac{d}{dz} \frac{f'(z)}{\sqrt{1+f'(z)^2}}&=\frac{d}{dz}\cos\phi \\
+    \frac{g''(z)}{(1+g'(z)^2)^{\frac{3}{2}}}&=\frac{d(\cos\phi)}{dx} \\
+    \frac{1}{R_1}&=-\frac{d(\cos\phi)}{dz}
+\end{align}
 We can also write $R_2$ in terms of $\phi$ by considering the normal to the curve at a point $(x,f(x))$. An equation for this normal is given by
 \begin{align}
     (\bar{x}-x) + f'(x)(\bar{z}-f(x))=0
@@ -101,7 +118,7 @@ Combining these all together we obtain
 \end{align}
 \begin{figure}[hb]
     \centering
-    \includegraphics[width=0.55\linewidth]{WriteUp/images/angles and trig.png}
+    \includegraphics[width=0.6\linewidth]{WriteUp/images/angles and trig.png}
     \caption{A bubble floating at a surface}
     \label{fig:4}
 \end{figure}
@@ -110,3 +127,40 @@ We now introduce a capillary constant $a^2$ having dimension of square length an
     \frac{(\rho-\rho')g}{\gamma} = \frac{2}{a^2}
 \end{align}
 transform $x$, $z$, $R_0$, etc. to dimensionless quantities $\bar{x}$, $\bar{z}$, $\bar{R_0}$, etc. by
+\begin{align}
+    x=a\bar{x}, && z=a\bar{z}, && R_0=a\bar{R}_0, && \text{etc.}
+\end{align}
+We then consider two new transformed coordinates:
+\begin{align}
+    \bar{z}_1 = \bar{z}+\bar{h}, && \bar{z}_2=\bar{z}+\bar{l}
+\end{align}
+where $\bar{h}$ and $\bar{l}$ are chosen such that $\bar{z}_1$ has its origin at the deepest point of the bubble for portion (A) and $\bar{z}_2$ has its origin at the centre of the sphere for portion (B). For portion (A), instead of \ref{A_untransformed}, we obtain
+\begin{align}\label{less than}
+\begin{rcases}   
+    \frac{d\bar{z}_1}{d\bar{x}} &= \tan \phi \\
+    \frac{d(\sin\phi)}{d\bar{x}} &= 2\bar{z}_1 - \frac{\sin\phi}{\bar{x}} + \theta
+\end{rcases} 
+\end{align}
+or,
+\begin{align}\label{greater than}
+\begin{rcases}
+    \frac{d\bar{x}}{d\bar{z}_1} &= \cot \phi \\
+    \frac{d(\cos\phi)}{d\bar{z}_1} &= -2\bar{z}_1 + \frac{\sin\phi}{\bar{x}} - \theta
+\end{rcases}
+\end{align}
+where,
+\begin{align}
+    \theta = \frac{4}{\bar{R}_0} - 2\bar{h}
+\end{align}
+and the equations \ref{less than} and \ref{greater than} are used for $\tan\phi <1$ and $\tan\phi >1$ respectively. Similarly for portion (C), equation \ref{C_untransformed} becomes,
+\begin{align}\label{C_transformed}
+\begin{rcases}   
+    \frac{d\bar{z}}{d\bar{x}} &= \tan \phi \\
+    \frac{d(\sin\phi)}{d\bar{x}} &= 2\bar{z} - \frac{\sin\phi}{\bar{x}}
+\end{rcases} 
+\end{align}
+and equation \ref{B_untransformed} for portion (B) becomes
+\begin{align}
+    \bar{z}_2 = \sqrt{ \bar{R}_0^2+\bar{x}^2}
+\end{align}
+
