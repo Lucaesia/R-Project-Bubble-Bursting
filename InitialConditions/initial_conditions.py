@@ -4,7 +4,7 @@ from scipy.optimize import fsolve # type: ignore
 from matplotlib import pyplot as plt # type: ignore
 
 
-Theta = 4
+Theta = 20
 delta = 0.001
 
 def func_wrt_x(x,y):
@@ -116,14 +116,26 @@ f_1_y = np.flip(sol2.t[:])
 
 ### z_bar, x_bar, h, l, R, x_0
 initial_guess = np.array([
-  0.13,
-  0.284,
-  0.592,
-  0.592,
-  0.772,
-  0.596
+  0.016,
+  0.01,
+  0.184,
+  0.184,
+  0.196,
+  4
 ])
-root = fsolve(Full_system,initial_guess)
+for i in range(40):
+  root = fsolve(Full_system,initial_guess)
+  initial_guess = root
+  Theta -= 0.25
+  sol = sci.solve_ivp(func_wrt_x, [0,4], np.array([0,0]), method='RK45', rtol=1e-5, atol=1e-10)
+  next_x = sol.t[np.size(sol.t)-1]
+  next_z = sol.y[0,np.size(sol.y[0,:])-1]
+
+  sol2 = sci.solve_ivp(func_wrt_z, [next_z,next_z+4], np.array([next_x,0]), method='RK45', rtol=1e-10, atol=1e-10)
+  f_1_x = np.flip(sol2.y[0,:])
+  f_1_y = np.flip(sol2.t[:]) 
+  
+  
 x_bar = root[1]
 h = root[2]
 l = root[3]
@@ -156,7 +168,7 @@ ax.plot(np.concatenate((sol.t,sol2.y[0,:])),np.concatenate((sol.y[0,:],sol2.t))-
 ax.plot(x,func_B(x,r_0)-l, label="cap")
 ax.plot(x_bar,func_B(x_bar,r_0)-l,'ro')
 ax.plot(f_2_x,f_2_y)
-#ax.set_xlim([0,1])
+ax.set_xlim([0,0.11])
 #np.savetxt("output.txt",[sol2.y[0,:50],sol2.t[:50]])
 #ax.plot(men_sol.t, men_sol.y[0,:])
 plt.legend()
