@@ -7,7 +7,7 @@
 # rm -r Water-R0.0031-Level8
 # Additional velocities or resolution levels can be added below
 for R in 0.0031 ; do
-	for LEVEL in 8; do
+	for LEVEL in 10 11; do
 
 		# Copy all files to renamed folder based on key parameters
 		cp -r MasterImpact/ Water-R$R-Level$LEVEL/
@@ -34,7 +34,7 @@ for R in 0.0031 ; do
 		# 10. max level
 
 		# Run executable ./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 0.35e-3 0.3855 6.0 5
-		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 8.5 $LEVEL
+		./DropImpact 998.0 1.21 0.998e-3 1.81e-5 0.0722 9.81 $R 1 10.0 $LEVEL
 		
 		cd ..
 	done

@@ -2,9 +2,12 @@ import numpy as np # type: ignore
 import scipy.integrate as sci # type: ignore
 from scipy.optimize import fsolve # type: ignore
 from matplotlib import pyplot as plt # type: ignore
+from scipy.optimize import root_scalar # type: ignore
+from scipy.optimize import minimize # type: ignore
+from scipy.interpolate import CubicSpline # type: ignore
 
 
-Theta = 20
+Theta = 4
 delta = 0.001
 
 def func_wrt_x(x,y):
@@ -76,6 +79,83 @@ def Half_system(x,xmin, xmax):
   # need an l
   return np.array([(f_1-h)-(f_3),f_1_derv-f_3_derv]) 
 
+def Full_system_2_var(x):
+  x_bar = x[0]
+  x_0 = x[1]
+  
+  men_x_initial = x_0
+  men_z_initial = 0.00001
+  sintheta_initial = 0.00001
+  men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
+  f_2_x = np.flip(men_sol.t)
+  f_2_y = np.flip(men_sol.y[0,:])
+  f_2 = np.interp(x_bar,f_2_x,f_2_y)
+  f_2_derv = (-np.interp(x_bar,f_2_x,f_2_y)+np.interp(x_bar+delta,f_2_x,f_2_y))/delta
+
+  f_1 = np.interp(x_bar,f_1_x,f_1_y)
+  f_1_derv = (-np.interp(x_bar,f_1_x,f_1_y) + np.interp(x_bar+delta,f_1_x,f_1_y))/delta
+
+  h = f_1 - f_2
+  R_0 = 2/(h + Theta/2)
+  #l = func_B(x_bar,R_0)-f_1
+
+  
+  #f_3 = func_B(x_bar,R_0)
+  f_3_derv = func_B_derv(x_bar,R_0)
+  return abs(f_1_derv-f_3_derv)**2 + abs(f_2_derv-f_3_derv)**2
+
+def variable_from_two(x):
+  x_bar = x[0]
+  x_0 = x[1]
+  
+  
+  men_x_initial = x_0
+  men_z_initial = 0.00001
+  sintheta_initial = 0.00001
+  men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
+  f_2_x = np.flip(men_sol.t)
+  f_2_y = np.flip(men_sol.y[0,:])
+  f_2 = np.interp(x_bar,f_2_x,f_2_y)
+  f_2_derv = (-np.interp(x_bar,f_2_x,f_2_y)+np.interp(x_bar+delta,f_2_x,f_2_y))/delta
+
+  f_1 = np.interp(x_bar,f_1_x,f_1_y)
+  f_1_derv = (-np.interp(x_bar,f_1_x,f_1_y) + np.interp(x_bar+delta,f_1_x,f_1_y))/delta
+
+  h = f_1 - f_2
+  R_0 = 2/(h + Theta/2)
+  l = func_B(x_bar,R_0)-f_2
+  #print("z=",f_1,f_2,func_B(x_bar,R_0))
+
+  return np.array([h,l,R_0])
+
+def Full_system_1_var(x_0):
+  men_x_initial = x_0
+  men_z_initial = 0.00001
+  sintheta_initial = 0.00001
+  men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
+  f_2_x = np.flip(men_sol.t)
+  f_2_y = np.flip(men_sol.y[0,:])
+  f_2 = np.interp(x_bar,f_2_x,f_2_y)
+
+  f_1_derv_func = lambda t : (-np.interp(t,f_1_x,f_1_y) + np.interp(t+delta,f_1_x,f_1_y))/delta
+  f_2_derv_func = lambda t : (-np.interp(t,f_2_x,f_2_y)+np.interp(t+delta,f_2_x,f_2_y))/delta
+  root_func = lambda t : f_1_derv_func(t)-f_2_derv_func(t)
+
+  x_bar = root_scalar(root_func,bracket=[f_2_x[0]+0.0001, f_2_x[np.size(f_2_x)-1]-0.0001])
+  f_2_derv = (-np.interp(x_bar,f_2_x,f_2_y)+np.interp(x_bar+delta,f_2_x,f_2_y))/delta
+
+  f_1 = np.interp(x_bar,f_1_x,f_1_y)
+  f_1_derv = (-np.interp(x_bar,f_1_x,f_1_y) + np.interp(x_bar+delta,f_1_x,f_1_y))/delta
+
+  h = f_1 - f_2
+  R_0 = 2/(h + Theta/2)
+  #l = func_B(x_bar,R_0)-f_1
+
+  
+  #f_3 = func_B(x_bar,R_0)
+  f_3_derv = func_B_derv(x_bar,R_0)
+  return np.array([f_1_derv-f_3_derv])
+
 scale=1
 fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
 
@@ -115,7 +195,7 @@ f_1_y = np.flip(sol2.t[:])
 
 
 ### z_bar, x_bar, h, l, R, x_0
-initial_guess = np.array([
+""" initial_guess = np.array([
   0.016,
   0.01,
   0.184,
@@ -133,14 +213,21 @@ for i in range(40):
 
   sol2 = sci.solve_ivp(func_wrt_z, [next_z,next_z+4], np.array([next_x,0]), method='RK45', rtol=1e-10, atol=1e-10)
   f_1_x = np.flip(sol2.y[0,:])
-  f_1_y = np.flip(sol2.t[:]) 
-  
-  
-x_bar = root[1]
-h = root[2]
-l = root[3]
-r_0 = root[4]
-print(root)
+  f_1_y = np.flip(sol2.t[:])  """
+
+initial_guess = np.array([
+  0.284,
+  7
+])
+
+sol_root = minimize(Full_system_2_var,initial_guess, bounds = ((f_1_x[0]+0.0001, f_1_x[np.size(f_1_x)-1]-0.0001), (1, None)))
+print(sol_root.x)  
+print(Full_system_2_var(sol_root.x))
+x_bar = sol_root.x[0]
+h = variable_from_two(sol_root.x)[0]
+l = variable_from_two(sol_root.x)[1]
+r_0 = variable_from_two(sol_root.x)[2]
+
 """ 
  #[0.016,0.196]
 root = root(Half_system,np.array([0.655,1.169]), args=(f_1_x[0],f_1_x[np.size(f_1_x)-1]),method='lm')
@@ -149,13 +236,12 @@ print(Theta)
 x_bar, r_0 = root.x
 h     = 2/r_0-Theta/2"""
 x = np.linspace(0,r_0,100)
-test = np.linspace(0,r_0,100)
-gap = 0#0.5035416392877905 - 1.174933217213838 
+
 #ax.plot(x,func_B(x,r_0)+h-l)
 #ax.plot(x_bar,func_B(x_bar,r_0)+h-l,'ro')
 
 #############################################################################################
-men_x_initial = root[5]
+men_x_initial = sol_root.x[1]
 men_z_initial = 0.00001
 sintheta_initial = 0.00001
 men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
@@ -168,9 +254,61 @@ ax.plot(np.concatenate((sol.t,sol2.y[0,:])),np.concatenate((sol.y[0,:],sol2.t))-
 ax.plot(x,func_B(x,r_0)-l, label="cap")
 ax.plot(x_bar,func_B(x_bar,r_0)-l,'ro')
 ax.plot(f_2_x,f_2_y)
-ax.set_xlim([0,0.11])
+
+""" for i in range(10):
+  men_x_initial += 0.5
+  men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
+  f_2_x = np.flip(men_sol.t)
+  f_2_y = np.flip(men_sol.y[0,:])
+  ax.plot(f_2_x,f_2_y,label=str(men_x_initial)) """
+ax.set_xlim([0,1.11])
+ax.set_aspect('equal')
 #np.savetxt("output.txt",[sol2.y[0,:50],sol2.t[:50]])
 #ax.plot(men_sol.t, men_sol.y[0,:])
 plt.legend()
 plt.savefig('interface.png')
+plt.clf()
+plt.close() 
+
+####################################### POLYNOMIAL CREATION ######################################
+print("polystart")
+f_1_x = np.flip(sol2.y[0,:])
+f_1_y = np.flip(sol2.t[:]) 
+
+under_coof = CubicSpline(sol.t,sol.y[0,:]-h)
+over_coof = CubicSpline(f_1_x,f_1_y-h)
+miniscus_coof = CubicSpline(f_2_x,f_2_y)
+np.savetxt("theta"+str(Theta)+"/under_coof.dat",np.transpose(under_coof.c))
+np.savetxt("theta"+str(Theta)+"/under_break.dat",np.transpose(under_coof.x))
+
+np.savetxt("theta"+str(Theta)+"/over_coof.dat",np.transpose(over_coof.c))
+np.savetxt("theta"+str(Theta)+"/over_break.dat",np.transpose(over_coof.x))
+
+np.savetxt("theta"+str(Theta)+"/menisc_coof.dat",np.transpose(miniscus_coof.c))
+np.savetxt("theta"+str(Theta)+"/menisc_break.dat",np.transpose(miniscus_coof.x))
+
+np.savetxt("theta"+str(Theta)+"/RL.dat",np.array([r_0,l]))
+right_most_x = sol.t[np.size(sol.t)-1]
+under_coof_x_list = np.linspace(0,right_most_x,100)
+over_coof_x_list = np.linspace(x_bar,right_most_x,100)
+miniscus_coof_x_list = np.linspace(x_bar,4,100)
+
+
+scale=1
+fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
+
+ax.plot(under_coof_x_list,under_coof(under_coof_x_list), label = "Rounded bottom")
+ax.plot(over_coof_x_list,over_coof(over_coof_x_list), label = "Rounded side")
+ax.plot(miniscus_coof_x_list,miniscus_coof(miniscus_coof_x_list), label = "minscus")
+ax.plot(x,func_B(x,r_0)-l, label="cap")
+ax.plot(x_bar,func_B(x_bar,r_0)-l,'ro')
+
+ax.set_xlim([0,1.11])
+ax.set_aspect('equal')
+#np.savetxt("output.txt",[sol2.y[0,:50],sol2.t[:50]])
+#ax.plot(men_sol.t, men_sol.y[0,:])
+plt.legend()
+plt.savefig('interface_poly.png')
 plt.clf() 
+
+#######################################---------------------######################################

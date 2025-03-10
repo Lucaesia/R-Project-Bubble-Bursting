@@ -15,7 +15,7 @@ while True:
     Level = 8
     t = 10.0
     string = "%.1f" % float(total_points*0.1)
-    file_name = "../DriverCode/Water-R0.0031-Level8/Interfaces/interfaceDrop-"+string+".dat"
+    file_name = "../DriverCode/Water-R0.0031-Level11/Interfaces/interfaceDrop-"+string+".dat"
     try:
         data = np.loadtxt(file_name, delimiter=' ', usecols=(0,1), unpack=False)
     except FileNotFoundError:

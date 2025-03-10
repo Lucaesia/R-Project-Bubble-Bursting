@@ -166,6 +166,68 @@ int main(int argc, char * argv[]) {
   fclose(fp_jet_vel);
   fclose(fp_jet_eject);
 }
+double calculate_cubic(double x, double* coof){
+  return x*(x*(x*coof[i] + coof[i+1] )+ coof[i+2] )+ coof[i+3]
+}
+
+int inside_or_out(double x, double y, double x_bar, double x_R, double* coof_under, double * coof_over,
+                  double* coof_menisc, double* break_under, double * break_over, double* break_menisc,
+                double coof_under_N,  double coof_over_N, double coof_menisc_N) {
+    int i;
+    int j;
+    int k;
+    double val;
+    double val2;
+    if ((x > x_bar) && (x > x_R)){
+      for (i=0; i<coof_menisc_N; i++){
+        if (x<break_menisc[i+1]){
+          j=i;
+          break;
+        }
+      }
+      val = x*(x*(x*coof_menisc[j] + coof_menisc[j+1] )+ coof_menisc[j+2] )+ coof_menisc[j+3]
+      if (y>val){
+        return 0;
+      }
+      return 1;
+    }
+
+    if ((x > x_bar) && (x <= x_R)){
+      for (i=0; i<coof_menisc_N; i++){
+        if (x<break_menisc[i+1]){
+          j=i;
+          break;
+        }
+      }
+      for (i=0; i<coof_over_N; i++){
+        if (x<break_over[i+1]){
+          k=i;
+          break;
+        }
+      }
+      val = x*(x*(x*coof_menisc[j] + coof_menisc[j+1] )+ coof_menisc[j+2] )+ coof_menisc[j+3]
+      val2 = x*(x*(x*coof_over[k] + coof_over[k+1] )+ coof_over[k+2] )+ coof_over[k+3]
+      if ((y<val)&&(y>val2)){
+        return 1;
+      }
+      return 0;
+    }
+    // FOR INITIAL AIR BUBBLE
+    for (i=0; i<coof_under_N; i++){
+      if (x<break_under[i+1]){
+        j=i;
+        break;
+      }
+    }
+  
+    val = x*(x*(x*coof_under[j] + coof_under[j+1] )+ coof_under[j+2] )+ coof_under[j+3]
+    if (y<val){
+      return 1;
+    }
+    return 0;
+
+
+}
 
 event acceleration (i++) {
   foreach_face(x)  
