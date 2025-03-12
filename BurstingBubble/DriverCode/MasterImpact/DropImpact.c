@@ -13,6 +13,9 @@
 #include "draw.h"                    // visualisation helper
 #include "tag.h"                     // helps track droplet properties
 #include <omp.h>
+# include <math.h>
+
+# include "spline.h"                 // adds an interpolator
 
 // Dimensional quantities (to be passed as arguments in main below)
 double rhoLiquid; // liquid phase density (kg/m^3)
@@ -43,6 +46,11 @@ FILE * fp_vol;
 FILE * fp_droplets;
 FILE * fp_jet_vel;
 FILE * fp_jet_eject;
+FILE * menisc_file;
+FILE * over_file;
+FILE * under_file;
+FILE * RL_file;
+
 
 double ND_Weber;
 double ND_Reynolds;
@@ -57,6 +65,8 @@ int num_jets = 0;
 
 int minLevel = 6;
 int maxLevel; // = 11;
+
+double Theta;
 
 double tEnd;
 
@@ -93,6 +103,7 @@ int main(int argc, char * argv[]) {
   v_init = atof(argv[8]);     // prescribed initial velocity
   tEnd = atof(argv[9]);       // prescribed simulation end time
   maxLevel = atof(argv[10]);  // prescribed maximum resolution level
+  Theta = atof(argv[11]);
   
   ND_Weber = (rhoLiquid*pow(v_init,2.0)*dRadius)/sig;
   ND_Reynolds = (rhoLiquid*v_init*dRadius)/muLiquid;
@@ -149,11 +160,27 @@ int main(int argc, char * argv[]) {
     fp_jet_vel = fopen(name, "w");
   }
 
+  // Pointer to jet ejection data
   {
     char name[200];
     sprintf(name, "jet_eject.dat");
     fp_jet_eject = fopen(name, "w");
   }
+  /*--------------------------------*/
+  /* Pointers to Initial conditions */
+  /*--------------------------------*/
+  {
+    char name[200];
+    sprintf(name, "../../../InitialConditions/theta%.1f/menisc.dat",Theta);
+    menisc_file = fopen(name, "r");
+    sprintf(name, "../../../InitialConditions/theta%.1f/over.dat",Theta);
+    over_file = fopen(name, "r");
+    sprintf(name, "../../../InitialConditions/theta%.1f/under.dat",Theta);
+    under_file = fopen(name, "r");
+    sprintf(name, "../../../InitialConditions/theta%.1f/RL.dat",Theta);
+    RL_file = fopen(name, "r");
+  }
+
   DT = 1e-2;
   NITERMIN = 1; // default 1
   NITERMAX = 200; // default 100
@@ -166,26 +193,47 @@ int main(int argc, char * argv[]) {
   fclose(fp_jet_vel);
   fclose(fp_jet_eject);
 }
-double calculate_cubic(double x, double* coof){
-  return x*(x*(x*coof[i] + coof[i+1] )+ coof[i+2] )+ coof[i+3]
+
+int count_lines(FILE* file)
+{
+    char buf[65536];
+    int counter = 0;
+    for(;;)
+    {
+        size_t res = fread(buf, 1, 65536, file);
+        if (ferror(file))
+            return -1;
+
+        int i;
+        for(i = 0; i < res; i++)
+            if (buf[i] == '\n')
+                counter++;
+
+        if (feof(file))
+            break;
+    }
+
+    return counter;
 }
 
-int inside_or_out(double x, double y, double x_bar, double x_R, double* coof_under, double * coof_over,
-                  double* coof_menisc, double* break_under, double * break_over, double* break_menisc,
-                double coof_under_N,  double coof_over_N, double coof_menisc_N) {
-    int i;
-    int j;
-    int k;
+int inside_or_out(double x, double y, double x_bar, double x_R, double menisc_max, double* under_x, double * over_x,
+                  double* menisc_x, double* under_y, double * over_y, double* menisc_y,
+                int under_N,  int over_N, int menisc_N) {
     double val;
+    double valp;  // no idea what this does but the spline function want it
     double val2;
-    if ((x > x_bar) && (x > x_R)){
-      for (i=0; i<coof_menisc_N; i++){
-        if (x<break_menisc[i+1]){
-          j=i;
-          break;
-        }
+    double val3;
+    // CONSIDER CASE WHERE MENISC RUNS OUT
+    if (x>menisc_max){
+      if (y>0){
+        return 0;
       }
-      val = x*(x*(x*coof_menisc[j] + coof_menisc[j+1] )+ coof_menisc[j+2] )+ coof_menisc[j+3]
+      return 1;
+    }
+
+    if ((x > x_bar) && (x > x_R)){
+      
+      spline_linear_val ( menisc_N, menisc_x, menisc_y, x, &val, &valp );
       if (y>val){
         return 0;
       }
@@ -193,34 +241,21 @@ int inside_or_out(double x, double y, double x_bar, double x_R, double* coof_und
     }
 
     if ((x > x_bar) && (x <= x_R)){
-      for (i=0; i<coof_menisc_N; i++){
-        if (x<break_menisc[i+1]){
-          j=i;
-          break;
-        }
-      }
-      for (i=0; i<coof_over_N; i++){
-        if (x<break_over[i+1]){
-          k=i;
-          break;
-        }
-      }
-      val = x*(x*(x*coof_menisc[j] + coof_menisc[j+1] )+ coof_menisc[j+2] )+ coof_menisc[j+3]
-      val2 = x*(x*(x*coof_over[k] + coof_over[k+1] )+ coof_over[k+2] )+ coof_over[k+3]
+      
+      spline_linear_val ( menisc_N, menisc_x, menisc_y, x, &val, &valp );
+      spline_linear_val ( over_N, over_x, over_y, x, &val2, &valp );
+      spline_linear_val ( under_N, under_x, under_y, x, &val3, &valp );
       if ((y<val)&&(y>val2)){
+        return 1;
+      }
+      if (y<val3){
         return 1;
       }
       return 0;
     }
     // FOR INITIAL AIR BUBBLE
-    for (i=0; i<coof_under_N; i++){
-      if (x<break_under[i+1]){
-        j=i;
-        break;
-      }
-    }
   
-    val = x*(x*(x*coof_under[j] + coof_under[j+1] )+ coof_under[j+2] )+ coof_under[j+3]
+    spline_linear_val ( under_N, under_x, under_y, x, &val, &valp );
     if (y<val){
       return 1;
     }
@@ -273,10 +308,61 @@ event ejection (i++) {
 scalar omega[], viewingfield[], mylevel[], velnorm[];
 
 event init (t = 0.0) {
+  /*---------------------------------------------------------------*/
+  /* Reading initial condition files and setting initial condition */
+  /*---------------------------------------------------------------*/
+  double x_bar;
+  double x_R;
+  double menisc_max;
+  int under_N = count_lines(under_file);
+  int over_N = count_lines(over_file);
+  int menisc_N = count_lines(menisc_file);
+  double* under_x = malloc(sizeof(double)*(under_N));
+  double * over_x = malloc(sizeof(double)*(over_N));
+  double* menisc_x = malloc(sizeof(double)*(menisc_N));
+  double* under_y = malloc(sizeof(double)*(under_N));
+  double * over_y = malloc(sizeof(double)*(over_N));
+  double* menisc_y = malloc(sizeof(double)*(menisc_N));
+  
+  for (int i = 0; i < under_N; i++) {
+    double x,y;
+    fscanf(under_file,"%lf %lf\n", &x, &y);
+    under_x[i] = x;
+    under_y[i] = y;
+  }
+  for (int i = 0; i < over_N; i++) {
+    double x,y;
+    fscanf(over_file,"%lf %lf\n", &x, &y);
+    over_x[i] = x;
+    over_y[i] = y;
+  }
+  for (int i = 0; i < menisc_N; i++) {
+    double x,y;
+    fscanf(menisc_file,"%lf %lf\n", &x, &y);
+    menisc_x[i] = x;
+    menisc_y[i] = y;
+  }
+  fscanf(RL_file,"%lf %lf %lf\n", &x_R, &menisc_max, &x_bar);
+  fclose(menisc_file);
+  fclose(over_file);
+  fclose(under_file);
+  fclose(RL_file);
+
   filmHeight = -domainSize/2. + poolHeight;
 
+  fraction (f, inside_or_out(y, x, x_bar, x_R, menisc_max, under_x, over_x,
+     menisc_x,  under_y,  over_y,  menisc_y,
+   under_N,   over_N,  menisc_N));
+
+  free(under_x);
+  free(under_y);
+  free(over_x);
+  free(over_y);
+  free(menisc_x);
+  free(menisc_y);
+
   // Strong refinement around the interfacial regions
-  refine (((sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) < sq(1.0*1.05) && sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) > sq(1.0*0.95)) || fabs(x - filmHeight) <= 0.005) && level < maxLevel);
+  //refine (((sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) < sq(1.0*1.05) && sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) > sq(1.0*0.95)) || fabs(x - filmHeight) <= 0.005) && level < maxLevel);
   /*  
   A = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) < sq(1.0*1.05)  ## Ball at 1.5 above film with radius 1.05
   B = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) > sq(1.0*0.95)) ## outside Ball at 1.5 above film with radius 0.95
@@ -284,7 +370,7 @@ event init (t = 0.0) {
   && intersect
   */
   // Create active liquid phase as union between drop and film
-  fraction (f, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
+  //fraction (f, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
   //fraction (f2, (- x + filmHeight));
   
   // Initialise uniform velocity field inside droplet

@@ -4,7 +4,7 @@ from scipy.optimize import fsolve # type: ignore
 from matplotlib import pyplot as plt # type: ignore
 from scipy.optimize import root_scalar # type: ignore
 from scipy.optimize import minimize # type: ignore
-from scipy.interpolate import CubicSpline # type: ignore
+from scipy.interpolate import PchipInterpolator # type: ignore
 
 
 Theta = 4
@@ -275,19 +275,17 @@ print("polystart")
 f_1_x = np.flip(sol2.y[0,:])
 f_1_y = np.flip(sol2.t[:]) 
 
-under_coof = CubicSpline(sol.t,sol.y[0,:]-h)
-over_coof = CubicSpline(f_1_x,f_1_y-h)
-miniscus_coof = CubicSpline(f_2_x,f_2_y)
-np.savetxt("theta"+str(Theta)+"/under_coof.dat",np.transpose(under_coof.c))
-np.savetxt("theta"+str(Theta)+"/under_break.dat",np.transpose(under_coof.x))
+under_coof = PchipInterpolator(sol.t,sol.y[0,:]-h)
+over_coof = PchipInterpolator(f_1_x,f_1_y-h)
+miniscus_coof = PchipInterpolator(f_2_x,f_2_y)
+string = "%.1f" % float(Theta)
+np.savetxt("theta"+string+"/under.dat",np.transpose(np.stack((sol.t,sol.y[0,:]-h))))
 
-np.savetxt("theta"+str(Theta)+"/over_coof.dat",np.transpose(over_coof.c))
-np.savetxt("theta"+str(Theta)+"/over_break.dat",np.transpose(over_coof.x))
+np.savetxt("theta"+string+"/over.dat",np.transpose(np.stack((f_1_x,f_1_y-h))))
 
-np.savetxt("theta"+str(Theta)+"/menisc_coof.dat",np.transpose(miniscus_coof.c))
-np.savetxt("theta"+str(Theta)+"/menisc_break.dat",np.transpose(miniscus_coof.x))
+np.savetxt("theta"+string+"/menisc.dat",np.transpose(np.stack((f_2_x,f_2_y))))
 
-np.savetxt("theta"+str(Theta)+"/RL.dat",np.array([r_0,l]))
+np.savetxt("theta"+string+"/RL.dat",np.transpose(np.array([sol2.y[0,0],men_sol.t[0],x_bar])))
 right_most_x = sol.t[np.size(sol.t)-1]
 under_coof_x_list = np.linspace(0,right_most_x,100)
 over_coof_x_list = np.linspace(x_bar,right_most_x,100)
