@@ -13,9 +13,9 @@
 #include "draw.h"                    // visualisation helper
 #include "tag.h"                     // helps track droplet properties
 #include <omp.h>
-# include <math.h>
+#include <math.h>
 
-# include "spline.h"                 // adds an interpolator
+               // adds an interpolator
 
 // Dimensional quantities (to be passed as arguments in main below)
 double rhoLiquid; // liquid phase density (kg/m^3)
@@ -180,6 +180,7 @@ int main(int argc, char * argv[]) {
     sprintf(name, "../../../InitialConditions/theta%.1f/RL.dat",Theta);
     RL_file = fopen(name, "r");
   }
+  
 
   DT = 1e-2;
   NITERMIN = 1; // default 1
@@ -223,7 +224,8 @@ int inside_or_out(double x, double y, double x_bar, double x_R, double menisc_ma
     double valp;  // no idea what this does but the spline function want it
     double val2;
     double val3;
-    // CONSIDER CASE WHERE MENISC RUNS OUT
+    // CONSIDER CASE WHERE MENISC RUNS OUT, done
+    //printf("%g %g %g\n", x_bar, x_R, menisc_max);
     if (x>menisc_max){
       if (y>0){
         return 0;
@@ -233,7 +235,7 @@ int inside_or_out(double x, double y, double x_bar, double x_R, double menisc_ma
 
     if ((x > x_bar) && (x > x_R)){
       
-      spline_linear_val ( menisc_N, menisc_x, menisc_y, x, &val, &valp );
+      spline_linear_val( menisc_N, menisc_x, menisc_y, x, &val, &valp );
       if (y>val){
         return 0;
       }
@@ -242,9 +244,9 @@ int inside_or_out(double x, double y, double x_bar, double x_R, double menisc_ma
 
     if ((x > x_bar) && (x <= x_R)){
       
-      spline_linear_val ( menisc_N, menisc_x, menisc_y, x, &val, &valp );
-      spline_linear_val ( over_N, over_x, over_y, x, &val2, &valp );
-      spline_linear_val ( under_N, under_x, under_y, x, &val3, &valp );
+      spline_linear_val( menisc_N, menisc_x, menisc_y, x, &val, &valp );
+      spline_linear_val( over_N, over_x, over_y, x, &val2, &valp );
+      spline_linear_val( under_N, under_x, under_y, x, &val3, &valp );
       if ((y<val)&&(y>val2)){
         return 1;
       }
@@ -255,7 +257,7 @@ int inside_or_out(double x, double y, double x_bar, double x_R, double menisc_ma
     }
     // FOR INITIAL AIR BUBBLE
   
-    spline_linear_val ( under_N, under_x, under_y, x, &val, &valp );
+    spline_linear_val( under_N, under_x, under_y, x, &val, &valp );
     if (y<val){
       return 1;
     }
@@ -314,9 +316,14 @@ event init (t = 0.0) {
   double x_bar;
   double x_R;
   double menisc_max;
-  int under_N = count_lines(under_file);
-  int over_N = count_lines(over_file);
-  int menisc_N = count_lines(menisc_file);
+  int under_N;
+  int over_N;
+  int menisc_N;
+  
+
+  fscanf(RL_file,"%lf\n%lf\n%lf\n%ld\n%ld\n%ld\n", &x_R, &menisc_max, &x_bar, &under_N, &over_N, &menisc_N);//x_bar, x_R, menisc_max
+  printf("hope in the workplace : %d,%d,%d\n ",under_N, over_N, menisc_N);
+
   double* under_x = malloc(sizeof(double)*(under_N));
   double * over_x = malloc(sizeof(double)*(over_N));
   double* menisc_x = malloc(sizeof(double)*(menisc_N));
@@ -327,8 +334,10 @@ event init (t = 0.0) {
   for (int i = 0; i < under_N; i++) {
     double x,y;
     fscanf(under_file,"%lf %lf\n", &x, &y);
+    printf("%g, %g \n",x,y);
     under_x[i] = x;
     under_y[i] = y;
+    
   }
   for (int i = 0; i < over_N; i++) {
     double x,y;
@@ -341,15 +350,20 @@ event init (t = 0.0) {
     fscanf(menisc_file,"%lf %lf\n", &x, &y);
     menisc_x[i] = x;
     menisc_y[i] = y;
+    
   }
-  fscanf(RL_file,"%lf %lf %lf\n", &x_R, &menisc_max, &x_bar);
+  
   fclose(menisc_file);
   fclose(over_file);
   fclose(under_file);
   fclose(RL_file);
 
   filmHeight = -domainSize/2. + poolHeight;
-
+  for (int i; i<20; i++){
+    printf("inside?: %d\n",inside_or_out(0.001, -i*0.1, x_bar, x_R, menisc_max, under_x, over_x,    menisc_x,  under_y,  over_y,  menisc_y,  under_N,   over_N,  menisc_N));
+  
+  }
+  
   fraction (f, inside_or_out(y, x, x_bar, x_R, menisc_max, under_x, over_x,
      menisc_x,  under_y,  over_y,  menisc_y,
    under_N,   over_N,  menisc_N));
@@ -574,4 +588,149 @@ event logstats (t += 0.01) {
     // Output i, timestep, no of cells, real time elapsed, cpu time
     fprintf(fp_stats, "i: %i t: %g dt: %g #Cells: %ld Wall clock time (s): %g CPU time (s): %g \n", i, t, dt, grid->n, perf.t, s.cpu);
     fflush(fp_stats);
+}
+
+/*###########################################################################*/
+/*###########################################################################*/
+/*###########################################################################*/
+/*###########################################################################*/
+/*###########################################################################*/
+/*###########################################################################*/
+/*###########################################################################*/
+
+/******************************************************************************/
+
+void spline_linear_val ( int ndata, double tdata[], double ydata[], 
+  double tval, double *yval, double *ypval )
+
+/******************************************************************************/
+/*
+  Purpose:
+
+    SPLINE_LINEAR_VAL evaluates a piecewise linear spline at a point.
+
+  Discussion:
+
+    Because of the extremely simple form of the linear spline,
+    the raw data points ( TDATA(I), YDATA(I)) can be used directly to
+    evaluate the spline at any point.  No processing of the data
+    is required.
+
+  Licensing:
+
+    This code is distributed under the GNU LGPL license. 
+
+  Modified:
+
+    24 February 2004
+
+  Author:
+
+    John Burkardt
+
+  Parameters:
+
+    Input, int NDATA, the number of data points defining the spline.
+
+    Input, double TDATA[NDATA], YDATA[NDATA], the values of the independent
+    and dependent variables at the data points.  The values of TDATA should
+    be distinct and increasing.
+
+    Input, double TVAL, the point at which the spline is to be evaluated.
+
+    Output, double *YVAL, *YPVAL, the value of the spline and its first
+    derivative dYdT at TVAL.  YPVAL is not reliable if TVAL is exactly
+    equal to TDATA(I) for some I.
+*/
+{
+  int left;
+  int right;
+/*
+  Find the interval [ TDATA(LEFT), TDATA(RIGHT) ] that contains, or is
+  nearest to, TVAL.
+*/
+  r8vec_bracket ( ndata, tdata, tval, &left, &right );
+/*
+  Now evaluate the piecewise linear function.
+*/
+  *ypval = ( ydata[right-1] - ydata[left-1] ) 
+         / ( tdata[right-1] - tdata[left-1] );
+
+  *yval = ydata[left-1] +  ( tval - tdata[left-1] ) * (*ypval);
+
+  return;
+}
+
+/******************************************************************************/
+
+void r8vec_bracket ( int n, double x[], double xval, int *left,
+  int *right )
+
+/******************************************************************************/
+/*
+  Purpose:
+
+    R8VEC_BRACKET searches a sorted array for successive brackets of a value.
+
+  Discussion:
+
+    An R8VEC is a vector of R8's.
+
+    If the values in the vector are thought of as defining intervals
+    on the real line, then this routine searches for the interval
+    nearest to or containing the given value.
+
+    It is always true that RIGHT = LEFT+1.
+
+    If XVAL < X[0], then LEFT = 1, RIGHT = 2, and
+      XVAL   < X[0] < X[1];
+    If X(1) <= XVAL < X[N-1], then
+      X[LEFT-1] <= XVAL < X[RIGHT-1];
+    If X[N-1] <= XVAL, then LEFT = N-1, RIGHT = N, and
+      X[LEFT-1] <= X[RIGHT-1] <= XVAL.
+
+    For consistency, this routine computes indices RIGHT and LEFT
+    that are 1-based, although it would be more natural in C and
+    C++ to use 0-based values.
+
+  Licensing:
+
+    This code is distributed under the GNU LGPL license.
+
+  Modified:
+
+    31 May 2009
+
+  Author:
+
+    John Burkardt
+
+  Parameters:
+
+    Input, int N, length of input array.
+
+    Input, double X[N], an array that has been sorted into ascending order.
+
+    Input, double XVAL, a value to be bracketed.
+
+    Output, int *LEFT, *RIGHT, the results of the search.
+*/
+{
+  int i;
+
+  for ( i = 2; i <= n - 1; i++ )
+  {
+    if ( xval < x[i-1] )
+    {
+      *left = i - 1;
+      *right = i;
+      return;
+    }
+
+   }
+
+  *left = n - 1;
+  *right = n;
+
+  return;
 }

@@ -279,13 +279,21 @@ under_coof = PchipInterpolator(sol.t,sol.y[0,:]-h)
 over_coof = PchipInterpolator(f_1_x,f_1_y-h)
 miniscus_coof = PchipInterpolator(f_2_x,f_2_y)
 string = "%.1f" % float(Theta)
-np.savetxt("theta"+string+"/under.dat",np.transpose(np.stack((sol.t,sol.y[0,:]-h))))
 
-np.savetxt("theta"+string+"/over.dat",np.transpose(np.stack((f_1_x,f_1_y-h))))
+scale = 2
+np.savetxt("theta"+string+"/under.dat",scale*np.transpose(np.stack((sol.t,sol.y[0,:]-h))))
 
-np.savetxt("theta"+string+"/menisc.dat",np.transpose(np.stack((f_2_x,f_2_y))))
+np.savetxt("theta"+string+"/over.dat",scale*np.transpose(np.stack((f_1_x,f_1_y-h))))
 
-np.savetxt("theta"+string+"/RL.dat",np.transpose(np.array([sol2.y[0,0],men_sol.t[0],x_bar])))
+np.savetxt("theta"+string+"/menisc.dat",scale*np.transpose(np.stack((f_2_x,f_2_y))))
+#                                                                x_R          menisc_x    x_bar  under_N, Over_N, menisc_N
+np.savetxt("theta"+string+"/RL.dat",scale*np.transpose(np.array([sol2.y[0,0],men_sol.t[0],x_bar])))
+
+with open("theta"+string+"/RL.dat","a") as my_file:
+    my_file.write(str(np.size(sol.t))+"\n")
+    my_file.write(str(np.size(f_1_x))+"\n")
+    my_file.write(str(np.size(f_2_x))+"\n")
+
 right_most_x = sol.t[np.size(sol.t)-1]
 under_coof_x_list = np.linspace(0,right_most_x,100)
 over_coof_x_list = np.linspace(x_bar,right_most_x,100)

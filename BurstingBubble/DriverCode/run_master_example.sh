@@ -16,7 +16,7 @@ for R in 0.0032 ; do
     
 		echo "COMPILING R: $R  LEVEL: $LEVEL"
 		# Compile code to create the executable (including visualisation)
-		qcc -O2 -w -fopenmp -Wall DropImpact.c spline.c -lm -o DropImpact -L$BASILISK/gl -lglutils -lfb_tiny
+		qcc -O2 -w -fopenmp -Wall DropImpact.c -lm -o DropImpact -L$BASILISK/gl -lglutils -lfb_tiny
     echo "RUNNING R: $R  LEVEL: $LEVEL"
 		# Specify parallelisation features		
 		export OMP_NUM_THREADS=2
