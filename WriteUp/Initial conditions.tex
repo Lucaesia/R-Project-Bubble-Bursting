@@ -159,8 +159,66 @@ and the equations \ref{less than} and \ref{greater than} are used for $\tan\phi 
     \frac{d(\sin\phi)}{d\bar{x}} &= 2\bar{z} - \frac{\sin\phi}{\bar{x}}
 \end{rcases} 
 \end{align}
-and equation \ref{B_untransformed} for portion (B) becomes
-\begin{align}
+We can notice that equation \ref{less than} and \ref{greater than} are essentially the same of equation \ref{C_transformed} except for the additional $\theta$ term. Finally equation \ref{B_untransformed} for portion (B) becomes
+\begin{align}\label{Eq_B}
     \bar{z}_2 = \sqrt{ \bar{R}_0^2+\bar{x}^2}
 \end{align}
+We are now ready to start solving for the initial condition.
 
+\subsection{Solving for the initial condition}
+
+We have derived the governing equations for each of the three portions of the bubble and now can start to solve them. We already have an explicit expression for portion (B), although finding analytic solutions to \ref{less than}, \ref{greater than} and \ref{C_transformed} is too difficult. Instead we can find numerical solutions using a Runge-Kutta method.
+
+First we consider the equations \ref{less than} and \ref{greater than}. We use the initial conditions $\bar{x}=\bar{z}_1=0$ at $\theta=0$ as we assume that at the bottom of the bubble is flat, i.e.
+\begin{align}
+    \frac{d\bar{z}_1}{d\bar{x}}&=0\\
+    \Leftrightarrow \:\:\:\:\:\theta&=0.
+\end{align}
+The relations
+\begin{align}
+    \frac{1}{\bar{R}_1}=\frac{\sin\phi}{\bar{x}}=\frac{1}{\bar{R}_2}=\frac{d(\sin\phi)}{d\bar{x}}=\frac{\theta}{2}
+\end{align}
+In order to solve this ODE, we used the $\texttt{solve\_ivp}$ function from SciPy \cite{2020SciPy-NMeth}. Once again we need to do a little more work before we're able to use this function. First, consider the vector $\bf{z}$ defined by
+\begin{align}
+    \bf{z} = \begin{bmatrix}
+           \bar{z}_1 \\
+           u \\
+         \end{bmatrix}
+\end{align}
+where $u=\sin \phi$. Transforming our ODE we obtain
+\begin{align}
+    \frac{d\bf{z}}{d\bar{x}}=\begin{bmatrix}
+           \frac{u}{\sqrt{1-u^2}} \\
+           -2\bar{z}_1 - \frac{u}{\bar{x}}+\theta \\
+         \end{bmatrix}
+\end{align}
+which we can then solve for $\phi \in [0,\pi]$.
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/bottom curve.png}
+    \caption{Solutions to \ref{less than} for various $\theta$ values}
+    \label{fig:9}
+\end{figure}
+As $\phi \rightarrow \pi/2$, $\frac{d\bar{z}_1}{dx} \rightarrow \infty$. This means our solver cannot compute the solution for $\phi> \pi/2$. What we do instead, is we can use the computed values for $\bar{z}_1$ and $\bar{x}$ at $\phi=\pi/2$ as initial conditions for equations \ref{greater than}. In a similar way to before, we can transform the equations \ref{greater than} into
+\begin{align}
+     \frac{d\bf{x}}{d\bar{z}_1}=\begin{bmatrix}
+           \frac{v}{\sqrt{1-v^2}} \\
+           -2\bar{z}_1 + \frac{\sqrt{1-v^2}}{\bar{x}}-\theta \\
+         \end{bmatrix},
+\end{align}
+where $ {x} = \begin{bmatrix}
+    \bar{x}\\v
+\end{bmatrix}$ and $v=\cos\phi$. We can then once again use $\texttt{solve\_ivp}$ to get a full solution to \ref{less than} and \ref{greater than}.let this solution be denoted by the function $F$ where
+\begin{align}
+    F(\bar{x},\theta,\phi)= \begin{cases}
+        f_1(\bar{x},\theta) \;\;\;\;\; \text{for } \phi>\pi/2\\
+        \tilde{f_1}(\bar{x},\theta) \;\;\;\;\; \text{for } \phi<\pi/2
+    \end{cases}
+\end{align}
+
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/top and bottom curve.png}
+    \caption{Solutions to \ref{less than} and \ref{greater than} for various $\theta$ values}
+    \label{fig:10}
+\end{figure}
