@@ -165,7 +165,7 @@ We can notice that equation \ref{less than} and \ref{greater than} are essential
 \end{align}
 We are now ready to start solving for the initial condition.
 
-\subsection{Solving for the initial condition}
+\subsection{Solving Portion (A)}
 
 We have derived the governing equations for each of the three portions of the bubble and now can start to solve them. We already have an explicit expression for portion (B), although finding analytic solutions to \ref{less than}, \ref{greater than} and \ref{C_transformed} is too difficult. Instead we can find numerical solutions using a Runge-Kutta method.
 
@@ -206,7 +206,7 @@ As $\phi \rightarrow \pi/2$, $\frac{d\bar{z}_1}{dx} \rightarrow \infty$. This me
            -2\bar{z}_1 + \frac{\sqrt{1-v^2}}{\bar{x}}-\theta \\
          \end{bmatrix},
 \end{align}
-where $ {x} = \begin{bmatrix}
+where $ \bf{x} = \begin{bmatrix}
     \bar{x}\\v
 \end{bmatrix}$ and $v=\cos\phi$. We can then once again use $\texttt{solve\_ivp}$ to get a full solution to \ref{less than} and \ref{greater than}.let this solution be denoted by the function $F$ where
 \begin{align}
@@ -222,3 +222,30 @@ where $ {x} = \begin{bmatrix}
     \caption{Solutions to \ref{less than} and \ref{greater than} for various $\theta$ values}
     \label{fig:10}
 \end{figure}
+
+\subsection{Solving Portion (C)}
+
+The equations generating portion (C) are very similar to portion (A), unfortunately, the boundary conditions make it much harder to solve. Portion (C) is the meniscus of the bubble and we would like it to flatten out at infinity. This means we have the boundary conditions $\phi \rightarrow 0$, $\bar{z} \rightarrow 0$ as $x \rightarrow \infty$. These conditions are unable to be implemented numerically, instead we can consider initial conditions close to zero, i.e. $\bar{z}=\phi=0.00001$ at $\bar{x}=\bar{x}_0$. We can then denote $\bar{z}=f_2(\bar{x},\bar{x}_0)$ as a solution to \ref{C_transformed}
+
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/menisc.png}
+    \caption{Solutions to \ref{C_transformed} for various $\bar{x}_0$ values}
+    \label{fig:10}
+\end{figure}
+
+\subsection{Combining all the portions}
+
+We are now able to calculate an explicit description of the interface for each individual section, but we still have many unknown variables we need to solve for. We want each portion to meet at the same point and match derivatives at that point. applying these constraints we get the following system of equations:
+\begin{align}
+    \bar{z}&=F(\bar{x},\theta,\phi) - \bar{h} \\
+    \bar{z}&=f_2(\bar{x},\bar{x}_0) \\
+    \bar{z}&=\sqrt{\bar{R}_0^2-\bar{x}^2} - \bar{l}=f_3(\bar{x},\bar{R}_0)-\bar{l} \\
+    \theta&=\frac{4}{\bar{R}}-2\bar{h}
+\end{align}
+and
+\begin{align}
+    \frac{d}{d\bar{x}}F(\bar{x},\theta,\phi)&=\frac{d}{d\bar{x}}f_2(\bar{x},\bar{x}_0) = \frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0)
+\end{align}
+We can notice that $\frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0)$ is always negative and that $\frac{d}{d\bar{x}}F(\bar{x},\theta,\phi)$ is only negative when $\phi>\pi/2$, i.e. when $F(\bar{x},\theta,\phi)=f_1(\bar{x},\theta)$. Using this we can reduce our system down to seven unknowns and six equations to solve.
+In order to solve this, we can
