@@ -10,7 +10,7 @@ We are considering the case where the fluid is stationary, i.e. $\bf{u} = \bf{0}
     \centering
     \includegraphics[width=0.55\linewidth]{WriteUp/images/bubble at surface.png}
     \caption{A bubble floating at a surface}
-    \label{fig:1}
+    \label{fig:2}
 \end{figure}
 
 We can divide the surface of a bubble into three regions: (A) the submerged portion of the interface, (B) the thin film over the top of the bubble separating the two gas regions, (C) the regions of the interface trailing away from the border of the thin film. We neglect the thickness of the film means we can ignore the weight of the film. Adding that the difference between the gas pressures inside and out of the bubble is uniform, the thin film can be treated as a spherical surface of radius $R_0$. The force balance equations at any point on these surfaces are,
@@ -66,8 +66,8 @@ We now introduce the variable $\phi$ defined to be the angle at which the tangen
 \begin{figure}[hb]
     \centering
     \includegraphics[width=0.55\linewidth]{WriteUp/images/tangent to bubble extra.png}
-    \caption{A bubble floating at a surface}
-    \label{fig:1}
+    \caption{A bubble floating at a surface with a tangent line at a point. This tangent intersects the $x$-axis with angle $\phi$}
+    \label{fig:3}
 \end{figure}
 We can calculate $\phi$ using simple trigonometry to be $\phi=\arctan(f'(x))$. We then consider:
 \begin{align}
@@ -119,7 +119,7 @@ Combining these all together we obtain
 \begin{figure}[hb]
     \centering
     \includegraphics[width=0.6\linewidth]{WriteUp/images/angles and trig.png}
-    \caption{A bubble floating at a surface}
+    \caption{A bubble floating at a surface. Both a tangent line and a line normal to the curve are shown at a point. The distance along the normal between the point and the $z$-axis is given by $R$}
     \label{fig:4}
 \end{figure}
 We now introduce a capillary constant $a^2$ having dimension of square length and defined by the equation
@@ -197,7 +197,7 @@ which we can then solve for $\phi \in [0,\pi]$.
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/bottom curve.png}
     \caption{Solutions to \ref{less than} for various $\theta$ values}
-    \label{fig:9}
+    \label{fig:5}
 \end{figure}
 As $\phi \rightarrow \pi/2$, $\frac{d\bar{z}_1}{dx} \rightarrow \infty$. This means our solver cannot compute the solution for $\phi> \pi/2$. What we do instead, is we can use the computed values for $\bar{z}_1$ and $\bar{x}$ at $\phi=\pi/2$ as initial conditions for equations \ref{greater than}. In a similar way to before, we can transform the equations \ref{greater than} into
 \begin{align}
@@ -220,7 +220,7 @@ where $ \bf{x} = \begin{bmatrix}
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/top and bottom curve.png}
     \caption{Solutions to \ref{less than} and \ref{greater than} for various $\theta$ values}
-    \label{fig:10}
+    \label{fig:6}
 \end{figure}
 
 \subsection{Solving Portion (C)}
@@ -231,7 +231,7 @@ The equations generating portion (C) are very similar to portion (A), unfortunat
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/menisc.png}
     \caption{Solutions to \ref{C_transformed} for various $\bar{x}_0$ values}
-    \label{fig:10}
+    \label{fig:7}
 \end{figure}
 
 \subsection{Combining all the portions}
@@ -247,5 +247,42 @@ and
 \begin{align}
     \frac{d}{d\bar{x}}F(\bar{x},\theta,\phi)&=\frac{d}{d\bar{x}}f_2(\bar{x},\bar{x}_0) = \frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0)
 \end{align}
-We can notice that $\frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0)$ is always negative and that $\frac{d}{d\bar{x}}F(\bar{x},\theta,\phi)$ is only negative when $\phi>\pi/2$, i.e. when $F(\bar{x},\theta,\phi)=f_1(\bar{x},\theta)$. Using this we can reduce our system down to seven unknowns and six equations to solve.
-In order to solve this, we can
+We can notice that $\frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0)$ is always negative and that $\frac{d}{d\bar{x}}F(\bar{x},\theta,\phi)$ is only negative when $\phi>\pi/2$, i.e. when $F(\bar{x},\theta,\phi)=f_1(\bar{x},\theta)$. Using this we can reduce our system down to seven unknowns and six equations to solve, allowing us to have a free variable in $\theta$
+
+We can further reduce this highly non-linear system to two variables. For a fixed $\theta$, we can consider this system in terms of $\bar{x}$ and $\bar{x}_0$ only. By fixing $\theta$ we can solve \ref{greater than} and \ref{less than} to obtain $f_1(\bar{x},\theta)$. We can then solve \ref{C_transformed} to obtain $f_2(\bar{x},\bar{x}_0)$. We can then obtain
+\begin{align}
+    \bar{h} = f_1(\bar{x},\theta) - f_2(\bar{x},\bar{x}_0),
+\end{align}
+and
+\begin{align}
+    \bar{R}_0=\frac{4}{2\bar{h} + \theta}.
+\end{align}
+Then we are able to calculate $f_3(\bar{x},\bar{R}_0)$ and finally
+\begin{align}
+    \bar{l} = f_3(\bar{x},\bar{R}_0)-f_1(\bar{x},\theta).
+\end{align}
+This reduces out problem to finding the roots of
+\begin{align}
+    \frac{d}{d\bar{x}}f_1(\bar{x},\theta) -\frac{d}{d\bar{x}}f_2(\bar{x},\bar{x}_0) &=0 \\
+    \frac{d}{d\bar{x}}f_1(\bar{x},\theta) - \frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0) &=0
+\end{align}
+\subsection{Solutions}
+We are now able to start
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/combined theta=1.6.png}
+    \caption{Solutions to full system for $\theta=1.6$}
+    \label{fig:8}
+\end{figure}
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/many bubbles ontop one another.png}
+    \caption{Solutions to full system for $\theta=1.6,2.4,3.2,4.0,8.0,16.0$}
+    \label{fig:9}
+\end{figure}
+\begin{figure}[hb]
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/radius over theta.png}
+    \caption{Size of the major radius of the bubble for varying values of $\theta$}
+    \label{fig:10}
+\end{figure}
