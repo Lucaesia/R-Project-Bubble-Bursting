@@ -5,7 +5,8 @@ from matplotlib import pyplot as plt # type: ignore
 from scipy.optimize import root_scalar # type: ignore
 from scipy.optimize import minimize # type: ignore
 from scipy.interpolate import PchipInterpolator # type: ignore
-
+import matplotlib # type: ignore
+matplotlib.rcParams['mathtext.fontset'] = 'cm'
 
 Theta = 4
 delta = 0.001
@@ -156,22 +157,48 @@ def Full_system_1_var(x_0):
   f_3_derv = func_B_derv(x_bar,R_0)
   return np.array([f_1_derv-f_3_derv])
 
-scale=1
+#=================================#
+# Printing out graphs of Under    #
+#=================================#
+
+""" scale=1.2
 fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
+for Theta in [4]:
+    sol = sci.solve_ivp(func_wrt_x, [0,4], np.array([0,0]), method='RK45', rtol=1e-10, atol=1e-10)
+    next_x = sol.t[np.size(sol.t)-1]
+    next_z = sol.y[0,np.size(sol.y[0,:])-1]
 
-#for Theta in [20]:#np.linspace(1,20,0.1):
-sol = sci.solve_ivp(func_wrt_x, [0,4], np.array([0,0]), method='RK45', rtol=1e-5, atol=1e-10)
-next_x = sol.t[np.size(sol.t)-1]
-next_z = sol.y[0,np.size(sol.y[0,:])-1]
-
-sol2 = sci.solve_ivp(func_wrt_z, [next_z,next_z+4], np.array([next_x,0]), method='RK45', rtol=1e-10, atol=1e-10)
-
+    sol2 = sci.solve_ivp(func_wrt_z, [next_z,next_z+4], np.array([next_x,0]), method='RK45', rtol=1e-10, atol=1e-10)
+    f_1_x = np.flip(sol2.y[0,:])
+    f_1_y = np.flip(sol2.t[:]) 
 
     
     
-    #ax.plot(sol.t,sol.y[0,:])
+    #ax.plot(np.concatenate ((sol.t,sol2.y[0,:])),np.concatenate ((sol.y[0,:],sol2.t)),label="Theta = "+str(Theta))
     #ax.plot(sol2.y[0,:], sol2.t)
+ """
+#=================================#
+# Printing out graphs of meniscus #
+#=================================#
+""" for x_bar_loop in [4,4.2,4.4,4.7,5,5.5,6]:
+  men_x_initial = x_bar_loop
+  men_z_initial = 0.00001
+  sintheta_initial = 0.00001
+  men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
+  f_2_x = np.flip(men_sol.t)
+  f_2_y = np.flip(men_sol.y[0,:])
+  ax.plot(f_2_x, f_2_y, label="$\overline{x}_0 = " + str(x_bar_loop)+"$")
 
+ax.set_aspect('equal')
+ax.set_xlabel('$\overline{x}$', fontsize=12)
+ax.set_ylabel('$\overline{z}$', rotation=0, fontsize=12)
+ax.set_xlim([0,0.1])
+plt.legend()
+plt.subplots_adjust(bottom=0.15)
+plt.savefig('menisdus_interface.png')
+plt.clf()
+plt.close() 
+exit()  """
 
 """ SOLVING FOR A """
 
@@ -190,43 +217,108 @@ sintheta_initial = 0.00001
 #men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
 #ax.plot(men_sol.t, men_sol.y[0,:])
 
-f_1_x = np.flip(sol2.y[0,:])
-f_1_y = np.flip(sol2.t[:]) 
 
-
-### z_bar, x_bar, h, l, R, x_0
-""" initial_guess = np.array([
-  0.016,
-  0.01,
-  0.184,
-  0.184,
-  0.196,
-  4
+initial_guess = np.array([##for 1.6
+  0.8034748,  8.79743954
 ])
-for i in range(40):
-  root = fsolve(Full_system,initial_guess)
-  initial_guess = root
-  Theta -= 0.25
-  sol = sci.solve_ivp(func_wrt_x, [0,4], np.array([0,0]), method='RK45', rtol=1e-5, atol=1e-10)
+
+initial_guesses = np.array([
+  [0.8034748,  8.79743954],
+  [0.58194697, 8.34403281],
+  [0.41497931, 7.89626882],
+  [0.3088965,  7.51300205],
+  [0.1215658,  6.55189027],
+  [0.03871182, 5.78062276]
+])
+Theta = 16
+Thetas = np.array([1.6,2.4,3.2,4,8,16])
+colours = np.array(["g","r","b","c","m","y"])
+radius_list = []
+colour_num = 0
+scale=2.1
+fig, ax = plt.subplots(figsize=(4*scale, 4*scale))
+
+initial_guess = np.array([##for 16.0
+  0.03871182, 5.78062276
+])
+for i in range (1):
+  #initial_guess = initial_guesses[i]
+  ###===============###
+  ### Calculate f_1 ###
+  ###===============###
+  sol = sci.solve_ivp(func_wrt_x, [0,4], np.array([0,0]), method='RK45', rtol=1e-10, atol=1e-10)
   next_x = sol.t[np.size(sol.t)-1]
   next_z = sol.y[0,np.size(sol.y[0,:])-1]
-
   sol2 = sci.solve_ivp(func_wrt_z, [next_z,next_z+4], np.array([next_x,0]), method='RK45', rtol=1e-10, atol=1e-10)
   f_1_x = np.flip(sol2.y[0,:])
-  f_1_y = np.flip(sol2.t[:])  """
+  f_1_y = np.flip(sol2.t[:]) 
+  string = "%.2f" % float(Theta) ## method="trust-constr"
+  sol_root = minimize(Full_system_2_var,initial_guess, bounds = ((f_1_x[0]+0.001, f_1_x[np.size(f_1_x)-1]-0.001), (1, None)))
+  print(string)
+  print(sol_root.x)  
+  print(Full_system_2_var(sol_root.x))
+  print(" ")
+  x_bar = sol_root.x[0]
+  h = variable_from_two(sol_root.x)[0]
+  l = variable_from_two(sol_root.x)[1]
+  r_0 = variable_from_two(sol_root.x)[2]
+  radius_list.append(next_x)
 
-initial_guess = np.array([
-  0.284,
-  7
-])
+  ###=====================###
+  ### Graphing and saving ###
+  ###=====================###
+  if True:
 
-sol_root = minimize(Full_system_2_var,initial_guess, bounds = ((f_1_x[0]+0.0001, f_1_x[np.size(f_1_x)-1]-0.0001), (1, None)))
-print(sol_root.x)  
-print(Full_system_2_var(sol_root.x))
-x_bar = sol_root.x[0]
-h = variable_from_two(sol_root.x)[0]
-l = variable_from_two(sol_root.x)[1]
-r_0 = variable_from_two(sol_root.x)[2]
+    scale=2.1
+    fig, ax = plt.subplots(figsize=(4*scale, 4*scale))
+    men_x_initial = sol_root.x[1]
+    men_z_initial = 0.00001
+    sintheta_initial = 0.00001
+    men_sol = sci.solve_ivp(func_C_eq, [men_x_initial,0], np.array([men_z_initial,sintheta_initial]), method='RK45', rtol=1e-9, atol=1e-9)
+    f_2_x = np.flip(men_sol.t)
+    f_2_y = np.flip(men_sol.y[0,:])
+    ##################################################################################################
+    x = np.linspace(0,r_0,100)
+    
+    ax.plot(np.concatenate((sol.t,sol2.y[0,sol2.y[0,:]>x_bar])),np.concatenate((sol.y[0,:],sol2.t[sol2.y[0,:]>x_bar]))-h, color = colours[colour_num])
+    ax.plot(np.concatenate((-sol.t,-sol2.y[0,sol2.y[0,:]>x_bar])),np.concatenate((sol.y[0,:],sol2.t[sol2.y[0,:]>x_bar]))-h, color = colours[colour_num])
+    ax.plot(x[x<x_bar],func_B(x[x<x_bar],r_0)-l, label = "θ = "+string,  color = colours[colour_num])
+    ax.plot(-x[x<x_bar],func_B(x[x<x_bar],r_0)-l,  color = colours[colour_num])
+    #ax.plot(x_bar,func_B(x_bar,r_0)-l,'r+',markersize=10)
+    #ax.text(x_bar+0.01,func_B(x_bar,r_0)-l+0.01,'($\overline{x},\overline{z}$)')
+    ax.plot(f_2_x[f_2_x>x_bar],f_2_y[f_2_x>x_bar], color = colours[colour_num])
+    ax.plot(-f_2_x[f_2_x>x_bar],f_2_y[f_2_x>x_bar], color = colours[colour_num])
+    #colour_num += 1
+    ax.axis('off')
+    ax.plot(np.linspace(-5,5,10),np.zeros(10), linestyle=":")
+    ax.set_xlim([-4,4])
+    #ax.set_ylim([-0.8,0.7])
+    ax.set_aspect('equal')
+    #np.savetxt("output.txt",[sol2.y[0,:50],sol2.t[:50]])
+    #ax.plot(men_sol.t, men_sol.y[0,:])
+    ax.set_xlabel('$\overline{x}$', fontsize=12)
+    ax.set_ylabel('$\overline{z}$', rotation=0, fontsize=12)
+    #plt.legend()
+    
+    plt.savefig('new_graphs/Full interface Theta='+string+'_small.png')
+    plt.clf()
+    plt.close()  
+  Theta += 0.2
+  initial_guess = sol_root.x
+
+""" ax.plot(np.linspace(-5,5,10),np.zeros(10), linestyle=":")
+ax.set_xlim([-3,3])
+ax.set_aspect('equal')
+#np.savetxt("output.txt",[sol2.y[0,:50],sol2.t[:50]])
+#ax.plot(men_sol.t, men_sol.y[0,:])
+ax.set_xlabel('$\overline{x}$', fontsize=15)
+ax.set_ylabel('$\overline{z}$', rotation=0, fontsize=15)
+plt.legend()
+plt.savefig('Full interface Theta multiple.png')
+plt.clf()
+plt.close()  """
+np.savetxt("radius list.dat",radius_list)
+exit()
 
 """ 
  #[0.016,0.196]
@@ -261,7 +353,7 @@ ax.plot(f_2_x,f_2_y)
   f_2_x = np.flip(men_sol.t)
   f_2_y = np.flip(men_sol.y[0,:])
   ax.plot(f_2_x,f_2_y,label=str(men_x_initial)) """
-ax.set_xlim([0,1.11])
+ax.set_xlim([0,1.51])
 ax.set_aspect('equal')
 #np.savetxt("output.txt",[sol2.y[0,:50],sol2.t[:50]])
 #ax.plot(men_sol.t, men_sol.y[0,:])

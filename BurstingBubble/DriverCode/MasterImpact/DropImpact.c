@@ -266,6 +266,53 @@ int inside_or_out(double x, double y, double x_bar, double x_R, double menisc_ma
 
 }
 
+int inside_or_out_grid_refinement(double x, double y, double x_bar, double x_R, double menisc_max, double* under_x, double * over_x,
+  double* menisc_x, double* under_y, double * over_y, double* menisc_y,
+  int under_N,  int over_N, int menisc_N) {
+  double val;
+  double valp;  // no idea what this does but the spline function want it
+  double val2;
+  double val3;
+  // CONSIDER CASE WHERE MENISC RUNS OUT, done
+  //printf("%g %g %g\n", x_bar, x_R, menisc_max);
+  if (x>menisc_max){
+    if (fabs(y)<0.005){
+      return 1;
+    }
+    return 0;
+  }
+
+  if ((x > x_bar) && (x > x_R)){
+
+  spline_linear_val( menisc_N, menisc_x, menisc_y, x, &val, &valp );
+    if (fabs(y-val)<0.05){
+      return 1;
+    }
+    return 0;
+  }
+
+  if ((x > x_bar) && (x <= x_R)){
+
+    spline_linear_val( menisc_N, menisc_x, menisc_y, x, &val, &valp );
+    spline_linear_val( over_N, over_x, over_y, x, &val2, &valp );
+    spline_linear_val( under_N, under_x, under_y, x, &val3, &valp );
+    if ((fabs(y-val)<0.05)||(fabs(y-val2)<0.05)||(fabs(y-val3)<0.05)){
+      return 1;
+    }
+    
+    return 0;
+  }
+  // FOR INITIAL AIR BUBBLE
+
+  spline_linear_val( under_N, under_x, under_y, x, &val, &valp );
+  if (fabs(y-val)<0.05){
+    return 1;
+  }
+  return 0;
+
+
+}
+
 event acceleration (i++) {
   foreach_face(x)  
     av.x[] -= 1./pow(ND_Froude,2.0);
@@ -368,6 +415,10 @@ event init (t = 0.0) {
      menisc_x,  under_y,  over_y,  menisc_y,
    under_N,   over_N,  menisc_N));
 
+  refine((inside_or_out_grid_refinement(y, x, x_bar, x_R, menisc_max, under_x, over_x,
+    menisc_x,  under_y,  over_y,  menisc_y,
+  under_N,   over_N,  menisc_N)) && level < maxLevel);
+
   free(under_x);
   free(under_y);
   free(over_x);
@@ -376,7 +427,7 @@ event init (t = 0.0) {
   free(menisc_y);
 
   // Strong refinement around the interfacial regions
-  //refine (((sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) < sq(1.0*1.05) && sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) > sq(1.0*0.95)) || fabs(x - filmHeight) <= 0.005) && level < maxLevel);
+  //refine (((condition ) && level < maxLevel);
   /*  
   A = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) < sq(1.0*1.05)  ## Ball at 1.5 above film with radius 1.05
   B = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) > sq(1.0*0.95)) ## outside Ball at 1.5 above film with radius 0.95
@@ -516,7 +567,7 @@ event droplets (t += 0.01)
 
 
 // Output animations
-/* event movies (t += 0.01; t <= tEnd){
+event movies (t += 0.1; t <= tEnd){
 
   char timestring[100];
   
@@ -544,7 +595,7 @@ event droplets (t += 0.01)
   draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
   
   save ("Animations/ImpactSummary.mp4");
-
+  /*
   view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
   clear();
   
@@ -578,8 +629,8 @@ event droplets (t += 0.01)
   draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
   
   save ("Animations/ImpactPVort.mp4"); 
-
-} */
+  */
+} 
 
 event logstats (t += 0.01) {
 
