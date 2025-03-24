@@ -1,21 +1,29 @@
 \section{Initial conditions}
+The shape of a bubble is determined by the interaction of two forces: Gravity and surface tension.
 
+Surface tension is an interfacial property of liquid that shows the elastic tendency, which is created by the attractive forces of the surface molecules
+
+
+
+\subsection{Governing Equations}
+Given the small size of the bubbles we are interested in, we can make the assumption that the cavity is initially motionless. Experiments have shown that, even in the absence of surfactants, a bubble can stay at the free surface in a quasi static equilibrium for a few seconds \cite{blanchard1988film}.
 We need to determine the initial shape of a bubble floating at a gas-liquid interface before it's film ruptures. This derivation is based on the work done in \cite{toba1959drop}.
+
 We are considering the case where the fluid is stationary, i.e. $\bf{u} = \bf{0}$, meaning on the boundaries we only need to consider the Young-Laplace equation:
 \begin{align}
     \Delta p=-\gamma \nabla \cdot \hat n
 \end{align}
 
-\begin{figure}[hb]
+\begin{figure}
     \centering
-    \includegraphics[width=0.55\linewidth]{WriteUp/images/bubble at surface.png}
-    \caption{A bubble floating at a surface}
+    \includegraphics[width=0.7\linewidth]{WriteUp/images/bubble at surface.png}
+    \caption{A bubble floating at a surface. Portion (A) in green is the portion of the bubble which is submerged in the liquid. Portion (B) in purple is the spherical cap of the bubble, where the sphere has radius $R_0$. Portion (C) in red is the meniscus of the bubble. All three portions meet at a point.}
     \label{fig:2}
 \end{figure}
 
 We can divide the surface of a bubble into three regions: (A) the submerged portion of the interface, (B) the thin film over the top of the bubble separating the two gas regions, (C) the regions of the interface trailing away from the border of the thin film. We neglect the thickness of the film means we can ignore the weight of the film. Adding that the difference between the gas pressures inside and out of the bubble is uniform, the thin film can be treated as a spherical surface of radius $R_0$. The force balance equations at any point on these surfaces are,
 \begin{align}\label{A_untransformed}
-    (\rho-\rho')gz = \gamma(\frac{1}{R_1}+\frac{1}{R_2}-\frac{4}{R_0})
+    (\rho-\rho')gz = \gamma \left( \frac{1}{R_1}+\frac{1}{R_2}-\frac{4}{R_0} \right)
 \end{align}
 for region (A),
 \begin{align}\label{B_untransformed}
@@ -63,7 +71,7 @@ Substituting in our coefficients for the first and second fundamental forms, sol
 \end{align}
 Notice that $R_1$ is exactly the radius of curvature of the meridian curve $\Gamma$
 We now introduce the variable $\phi$ defined to be the angle at which the tangent to $\Gamma$ makes with the x-axis. 
-\begin{figure}[hb]
+\begin{figure}
     \centering
     \includegraphics[width=0.55\linewidth]{WriteUp/images/tangent to bubble extra.png}
     \caption{A bubble floating at a surface with a tangent line at a point. This tangent intersects the $x$-axis with angle $\phi$}
@@ -116,7 +124,7 @@ Combining these all together we obtain
     \frac{1}{R_2}&=\frac{\sin(\phi)}{x},\\
     \frac{dz}{dx} &= \tan(\phi).
 \end{align}
-\begin{figure}[hb]
+\begin{figure}
     \centering
     \includegraphics[width=0.6\linewidth]{WriteUp/images/angles and trig.png}
     \caption{A bubble floating at a surface. Both a tangent line and a line normal to the curve are shown at a point. The distance along the normal between the point and the $z$-axis is given by $R$}
@@ -193,7 +201,7 @@ where $u=\sin \phi$. Transforming our ODE we obtain
          \end{bmatrix}
 \end{align}
 which we can then solve for $\phi \in [0,\pi]$.
-\begin{figure}[hb]
+\begin{figure}
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/bottom curve.png}
     \caption{Solutions to \ref{less than} for various $\theta$ values}
@@ -216,9 +224,9 @@ where $ \bf{x} = \begin{bmatrix}
     \end{cases}
 \end{align}
 
-\begin{figure}[hb]
+\begin{figure}
     \centering
-    \includegraphics[width=0.85\linewidth]{WriteUp/images/top and bottom curve.png}
+    \includegraphics[width=0.65\linewidth]{WriteUp/images/top and bottom curve.png}
     \caption{Solutions to \ref{less than} and \ref{greater than} for various $\theta$ values}
     \label{fig:6}
 \end{figure}
@@ -227,7 +235,7 @@ where $ \bf{x} = \begin{bmatrix}
 
 The equations generating portion (C) are very similar to portion (A), unfortunately, the boundary conditions make it much harder to solve. Portion (C) is the meniscus of the bubble and we would like it to flatten out at infinity. This means we have the boundary conditions $\phi \rightarrow 0$, $\bar{z} \rightarrow 0$ as $x \rightarrow \infty$. These conditions are unable to be implemented numerically, instead we can consider initial conditions close to zero, i.e. $\bar{z}=\phi=0.00001$ at $\bar{x}=\bar{x}_0$. We can then denote $\bar{z}=f_2(\bar{x},\bar{x}_0)$ as a solution to \ref{C_transformed}
 
-\begin{figure}[hb]
+\begin{figure}
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/menisc.png}
     \caption{Solutions to \ref{C_transformed} for various $\bar{x}_0$ values}
@@ -262,33 +270,39 @@ Then we are able to calculate $f_3(\bar{x},\bar{R}_0)$ and finally
     \bar{l} = f_3(\bar{x},\bar{R}_0)-f_1(\bar{x},\theta).
 \end{align}
 This reduces out problem to finding the roots of
-\begin{align}
-    \frac{d}{d\bar{x}}f_1(\bar{x},\theta) -\frac{d}{d\bar{x}}f_2(\bar{x},\bar{x}_0) &=0 \\
+\begin{align}\label{root 1}
+    \frac{d}{d\bar{x}}f_1(\bar{x},\theta) -\frac{d}{d\bar{x}}f_2(\bar{x},\bar{x}_0) &=0 \\ \label{root 2}
     \frac{d}{d\bar{x}}f_1(\bar{x},\theta) - \frac{d}{d\bar{x}}f_3(\bar{x},\bar{R}_0) &=0
 \end{align}
 \subsection{Solutions}
-We are now able to start computing solutions
-\begin{figure}[hb]
+We are now able to start computing solutions. In order to find the roots of \ref{root 1} and \ref{root 2}, we once again use SciPy. Due to the highly non-linear system we are solving, SciPy's root finding algorithms can be unreliable without a good initial guess. We are able to use data from \textit{TOBA} \cite{toba1959drop} as an initial guess for $\theta=2$, from there we could use our solution as an initial guess for $\theta=2.1$. This allows us to compute solutions for almost any $\theta$.
+
+\begin{figure}
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/combined theta=1.6.png}
-    \caption{Solutions to full system for $\theta=1.6$}
+    \caption{Solutions to full system for $\theta=1.6$. We can see each portion meets at the point $(\bar{x},\bar{z})$ and that the derivatives match with one another}
     \label{fig:8}
 \end{figure}
-\begin{figure}[hb]
+
+After computing a solution for a given $\theta$, we are able to calculate the bubble's nondimensional width. We note that $\theta$ is inversely proportional to this width as can be seen in figure \ref{fig:10}.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\linewidth]{WriteUp/images/Radius and volume.png}
+    \caption{Figure (a) shows the size of the major radius (width) of the bubble for varying values of $\theta$, we can see an inversely proportional relationship between the major radius and $\theta$. Figure (b) shows the calculated volume of the bubble for a given radius. We see for smaller radii, the calculated volume is almost exactly that of a sphere.}
+    \label{fig:10}
+\end{figure}
+
+For $\theta<1$ the solver becomes quite unreliable. This is due to the domain of $f_1$ shrinking, causing $f_1'$ to become incredibly sensitive to small changes in $\bar{x}$. This problem can be ignored however, as in this report we are considering bubbles formed at sea. As stated before, the scale of these bubbles is of order O($1$mm), transforming the radii we calculated for each theta (as shown in \ref{fig:8}) using the capillary constant for water ($a=2.71$ \cite{rapp2016microfluidics}) we find that for $\theta<0.9$ the radius of the bubble is greater than $5$mm. We can therefore safely ignore these small $\theta$ values as they do not correspond to any of the type of bubbles we are considering.
+\begin{figure}
     \centering
     \includegraphics[width=0.85\linewidth]{WriteUp/images/many bubbles ontop one another.png}
     \caption{Solutions to full system for $\theta=1.6,2.4,3.2,4.0,8.0,16.0$}
     \label{fig:9}
 \end{figure}
-\begin{figure}[hb]
-    \centering
-    \includegraphics[width=0.85\linewidth]{WriteUp/images/radius over theta.png}
-    \caption{Size of the major radius of the bubble for varying values of $\theta$}
-    \label{fig:10}
-\end{figure}
-\begin{figure}[hb]
-    \centering
-    \includegraphics[width=0.95\linewidth]{WriteUp/images/Bubble profiles.png}
-    \caption{Various bubble profiles scaled with $a=0.3848$ corresponding to sea water at $4 \degree \text{C}$ which was experimentally calculated by HAYAMI, S. and Y. TOBA,\ref{hayami1958drop}. The last two interfaces $\theta=16,30.8$ are scaled up.}
+In figure \ref{fig:9} we see a clear trend in the shape of the bubble as $\theta$ increases. For larger values we see surface tension forces dominate, resulting in a spherical bubbles floating tangent to the surface of the water. As the bubble gets larger, the gravitational forces increase, causing the cap of the bubble to rise further above the water level. Figure \ref{fig:11} shows the shape of air bubbles in sea water for radii between $3.5$mm and $0.18$mm.
+
+\begin{figure}
+    \centering    \includegraphics[width=0.95\linewidth]{WriteUp/images/Bubble profiles.png}
+    \caption{Various bubble profiles scaled with $a=2.71mm$ corresponding to the capillary length of water under standard conditions \cite{rapp2016microfluidics}. The last two interfaces $\theta=16,30.8$ are scaled up. We see as $\theta$ decreases, the shape of the interface approaches the shape of a sphere just beneath the surface.}
     \label{fig:11}
 \end{figure}

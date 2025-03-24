@@ -1,2 +1,28 @@
-\section{Initial conditions}
+\section{Numerical computation}
 
+The bubble is initially separated from the atmosphere by a thin liquid film. This film drains slowly until it reaches a critical thickness (about 100 nm) after which it breaks rapidly (how fast depends on the presence of surface contaminants). This means it is possible to run simulations by taking the initial condition calculated previously and removing the spherical cap. When we do this, a sharp corner is formed at the rim of the top of the bubble.
+
+\subsection{Governing Equations}
+
+In order to solve the evolution of the interface of a bursting bubble will need to numerically solve the Navier-Stokes equations:
+\begin{itemize}
+    \item Away from the interface:
+\end{itemize}
+\begin{align}
+    \nabla \cdot \textbf{u}=0, \\
+    \rho \frac{D \textbf{u}}{D t} = -\nabla p + \mu \nabla^2 u + \rho g.
+\end{align}
+\begin{itemize}
+    \item On the interface:
+    \begin{itemize}
+        \item Kinematic boundary condition:
+        \begin{align}
+            \frac{D f}{D t} = 0.
+            
+        \end{align}
+        \item Dynamic boundary condition:
+        \begin{align}
+            [\textbf{Tn}]^+_-= \gamma \kappa \textbf{n}
+        \end{align}
+    \end{itemize}
+\end{itemize}
