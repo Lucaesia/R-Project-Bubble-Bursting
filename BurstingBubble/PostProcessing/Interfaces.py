@@ -4,18 +4,19 @@ from matplotlib import collections  as mc # type: ignore
 
 
 # sets time inverval between files
-dt = 0.1
+dt = 0.01
 
 
 #variable for tracking number of files
 total_points = 1
 while True:
     # finds file name and exits loop once finished
-    R = 0.0071
-    Level = 8
+    R = "0.0002"
+    IC = "IC"
+    Level = 10
     t = 10.0
-    string = "%.1f" % float(total_points*0.1)
-    file_name = "../DriverCode/Water-R0.0032-Level8/Interfaces/interfaceDrop-"+string+".dat"
+    string = "%.2f" % float(total_points*0.01)
+    file_name = "../DriverCode/Water-"+IC+"-R"+R+"-Level"+str(Level)+"/Interfaces/interfaceDrop-"+string+".dat"
     try:
         data = np.loadtxt(file_name, delimiter=' ', usecols=(0,1), unpack=False)
     except FileNotFoundError:
@@ -37,15 +38,15 @@ while True:
     line_collection = mc.LineCollection(lines)
 
     # plots and saves graphs
-    scale=1
+    scale=4
     fig, ax = plt.subplots(figsize=(6.4*scale, 3.2*scale))
     # set axes limits manually because Collections do not take part in autoscaling
-    ax.set_xlim(-5, 5)
-    ax.set_ylim(-5, 5)
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
     ax.set_aspect("equal")  # to make the arcs look circular
 
 
-
+    
     ax.add_collection(line_collection)
 
     string2 = "%03d" % total_points
@@ -53,7 +54,7 @@ while True:
     plt.savefig('outputs/interface'+string2+'.png')
     plt.clf() 
     plt.close()
-   
     total_points+=1
+    
 
 

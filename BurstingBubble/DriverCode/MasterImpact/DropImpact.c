@@ -1,4 +1,5 @@
-// Author: Radu Cimpeanu
+// Author: Lyllian Chanerley
+// Based on code by: Radu Cimpeanu
 // Date: 26/09/2022
 
 #include "axi.h"                     // axisymmetric geometry
@@ -50,6 +51,7 @@ FILE * menisc_file;
 FILE * over_file;
 FILE * under_file;
 FILE * RL_file;
+FILE * fp_interface;
 
 
 double ND_Weber;
@@ -57,6 +59,7 @@ double ND_Reynolds;
 double ND_Froude;
 double ND_Bond;
 double ND_Ohnesorge;
+double ND_Laplace;
 
 double filmHeight;
 
@@ -69,6 +72,9 @@ int maxLevel; // = 11;
 double Theta;
 
 double tEnd;
+
+
+int IC;
 
 // Bottom of Pool = LEFT of domain
 // No slip, no permeability
@@ -104,14 +110,17 @@ int main(int argc, char * argv[]) {
   tEnd = atof(argv[9]);       // prescribed simulation end time
   maxLevel = atof(argv[10]);  // prescribed maximum resolution level
   Theta = atof(argv[11]);
+  IC = atof(argv[12]);
+  
   
   ND_Weber = (rhoLiquid*pow(v_init,2.0)*dRadius)/sig;
   ND_Reynolds = (rhoLiquid*v_init*dRadius)/muLiquid;
   ND_Froude = v_init/pow(dRadius*g_accel,0.5);
+  ND_Laplace = ND_Reynolds*ND_Reynolds/ND_Weber;
   ND_Bond = rhoLiquid*g_accel*pow(dRadius,2.0)/sig;
   ND_Ohnesorge = muLiquid/pow(rhoLiquid*sig*dRadius,0.5);
-    
-  init_grid(1 << 8);
+  printf("%d\n",1 << 10)  ;
+  init_grid(1 << 9);
   
   size(domainSize);                     
   origin(-0.5*domainSize, 0.0);
@@ -122,19 +131,20 @@ int main(int argc, char * argv[]) {
   mkdir("Interfaces", 0700);
 
   // Print dimensionless numbers for verification
-  fprintf(stdout, "Reynolds number = %0.6f \n", ND_Reynolds); fflush(stdout);
-  fprintf(stdout, "Weber number = %0.6f \n", ND_Weber); fflush(stdout);
-  fprintf(stdout, "Froude number = %0.6f \n", ND_Froude); fflush(stdout);
+  //fprintf(stdout, "Reynolds number = %0.6f \n", ND_Reynolds); fflush(stdout);
+  //fprintf(stdout, "Weber number = %0.6f \n", ND_Weber); fflush(stdout);
+  //fprintf(stdout, "Froude number = %0.6f \n", ND_Froude); fflush(stdout);
   fprintf(stdout, "Bond number = %0.6f \n", ND_Bond); fflush(stdout);
-  fprintf(stdout, "Ohnesorge number = %0.6f \n", ND_Ohnesorge); fflush(stdout);
+  //fprintf(stdout, "Ohnesorge number = %0.6f \n", ND_Ohnesorge); fflush(stdout);
+  fprintf(stdout, "Laplace number = %0.6f \n", ND_Laplace); fflush(stdout);
 
   rho1 = 1.;
-  rho2 = rho_ratio;
+  rho2 = rho_ratio;//gas/liquid
   
-  mu1 = 1./ND_Reynolds;
+  mu1 = 1./pow(ND_Laplace*ND_Bond,0.5);
   mu2 = mu_ratio*mu1;
   
-  f.sigma = 1./ND_Weber;
+  f.sigma = 1./ND_Bond;
   //f2.sigma = 1./ND_Weber;
 
   a = av;
@@ -144,6 +154,13 @@ int main(int argc, char * argv[]) {
     char name[200];
     sprintf(name, "logstats.dat");
     fp_stats = fopen(name, "w");
+  }
+
+  // Pointer of the file to save interface_stats
+  {
+    char name[200];
+    sprintf(name, "interfacestats.dat");
+    fp_interface = fopen(name, "w");
   }
 
   // Pointer of the file to droplet count info
@@ -193,6 +210,7 @@ int main(int argc, char * argv[]) {
   fclose(fp_droplets);
   fclose(fp_jet_vel);
   fclose(fp_jet_eject);
+  fclose(fp_interface);
 }
 
 int count_lines(FILE* file)
@@ -276,7 +294,7 @@ int inside_or_out_grid_refinement(double x, double y, double x_bar, double x_R, 
   // CONSIDER CASE WHERE MENISC RUNS OUT, done
   //printf("%g %g %g\n", x_bar, x_R, menisc_max);
   if (x>menisc_max){
-    if (fabs(y)<0.005){
+    if (fabs(y)<0.05){
       return 1;
     }
     return 0;
@@ -285,7 +303,7 @@ int inside_or_out_grid_refinement(double x, double y, double x_bar, double x_R, 
   if ((x > x_bar) && (x > x_R)){
 
   spline_linear_val( menisc_N, menisc_x, menisc_y, x, &val, &valp );
-    if (fabs(y-val)<0.05){
+    if (fabs(y-val)<0.5){
       return 1;
     }
     return 0;
@@ -296,7 +314,7 @@ int inside_or_out_grid_refinement(double x, double y, double x_bar, double x_R, 
     spline_linear_val( menisc_N, menisc_x, menisc_y, x, &val, &valp );
     spline_linear_val( over_N, over_x, over_y, x, &val2, &valp );
     spline_linear_val( under_N, under_x, under_y, x, &val3, &valp );
-    if ((fabs(y-val)<0.05)||(fabs(y-val2)<0.05)||(fabs(y-val3)<0.05)){
+    if ((fabs(y-val)<0.5)||(fabs(y-val2)<0.5)||(fabs(y-val3)<0.5)){
       return 1;
     }
     
@@ -305,7 +323,7 @@ int inside_or_out_grid_refinement(double x, double y, double x_bar, double x_R, 
   // FOR INITIAL AIR BUBBLE
 
   spline_linear_val( under_N, under_x, under_y, x, &val, &valp );
-  if (fabs(y-val)<0.05){
+  if (fabs(y-val)<0.5){
     return 1;
   }
   return 0;
@@ -313,9 +331,11 @@ int inside_or_out_grid_refinement(double x, double y, double x_bar, double x_R, 
 
 }
 
+
+
 event acceleration (i++) {
   foreach_face(x)  
-    av.x[] -= 1./pow(ND_Froude,2.0);
+    av.x[] -= 1;//1./pow(ND_Froude,2.0);
   foreach_face(y)  
     av.y[] += 0.0;
 }
@@ -369,7 +389,7 @@ event init (t = 0.0) {
   
 
   fscanf(RL_file,"%lf\n%lf\n%lf\n%ld\n%ld\n%ld\n", &x_R, &menisc_max, &x_bar, &under_N, &over_N, &menisc_N);//x_bar, x_R, menisc_max
-  printf("hope in the workplace : %d,%d,%d\n ",under_N, over_N, menisc_N);
+  //printf("hope in the workplace : %d,%d,%d\n ",under_N, over_N, menisc_N);
 
   double* under_x = malloc(sizeof(double)*(under_N));
   double * over_x = malloc(sizeof(double)*(over_N));
@@ -381,7 +401,7 @@ event init (t = 0.0) {
   for (int i = 0; i < under_N; i++) {
     double x,y;
     fscanf(under_file,"%lf %lf\n", &x, &y);
-    printf("%g, %g \n",x,y);
+    //printf("%g, %g \n",x,y);
     under_x[i] = x;
     under_y[i] = y;
     
@@ -400,16 +420,16 @@ event init (t = 0.0) {
     
   }
   
+  
   fclose(menisc_file);
   fclose(over_file);
   fclose(under_file);
   fclose(RL_file);
 
   filmHeight = -domainSize/2. + poolHeight;
-  for (int i; i<20; i++){
-    printf("inside?: %d\n",inside_or_out(0.001, -i*0.1, x_bar, x_R, menisc_max, under_x, over_x,    menisc_x,  under_y,  over_y,  menisc_y,  under_N,   over_N,  menisc_N));
-  
-  }
+  printf("IC = %d\n",IC);
+  if (IC==1){
+
   
   fraction (f, inside_or_out(y, x, x_bar, x_R, menisc_max, under_x, over_x,
      menisc_x,  under_y,  over_y,  menisc_y,
@@ -417,8 +437,8 @@ event init (t = 0.0) {
 
   refine((inside_or_out_grid_refinement(y, x, x_bar, x_R, menisc_max, under_x, over_x,
     menisc_x,  under_y,  over_y,  menisc_y,
-  under_N,   over_N,  menisc_N)) && level < maxLevel);
-
+  under_N,   over_N,  menisc_N)) && level < 12);
+  }
   free(under_x);
   free(under_y);
   free(over_x);
@@ -427,7 +447,7 @@ event init (t = 0.0) {
   free(menisc_y);
 
   // Strong refinement around the interfacial regions
-  //refine (((condition ) && level < maxLevel);
+  //refine (level < maxLevel);
   /*  
   A = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) < sq(1.0*1.05)  ## Ball at 1.5 above film with radius 1.05
   B = sq(x - (filmHeight + 1.0 + 0.5)) + sq(y) > sq(1.0*0.95)) ## outside Ball at 1.5 above film with radius 0.95
@@ -435,10 +455,16 @@ event init (t = 0.0) {
   && intersect
   */
   // Create active liquid phase as union between drop and film
-  //fraction (f, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
+  if (IC==0){
+    refine (((sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) < sq(1.0*1.05) && sq(x - (filmHeight - 1.0 + 0.1)) + sq(y) > sq(1.0*0.95)) || fabs(x - filmHeight) <= 0.005) && level < maxLevel);
+
+    fraction (f, (-sq(1.0) + sq(x - (filmHeight-1.0+0.01)) + sq(y) > 0) && (+ x - filmHeight < 0));
+  }
+  
   //fraction (f2, (- x + filmHeight));
   
   // Initialise uniform velocity field inside droplet
+  printf("after refinement\n");
   foreach()
   {
     
@@ -449,14 +475,21 @@ event init (t = 0.0) {
   }
 }
 
-event adapt (i++) {
+event adapt (i=5;i++) {
 
   // Refine only with respect to interfacial shape(s) location and velocity component magnitude
+  //printf("late");
   adapt_wavelet ((scalar *){f, u}, (double[]){1e-5, 1e-3, 1e-3}, maxLevel, minLevel);
 
 }
+event adapt_early (i=0;i++;i<5) {
+  //printf("early");
+  // Refine only with respect to interfacial shape(s) location and velocity component magnitude
+  adapt_wavelet ((scalar *){f, u}, (double[]){1e-5, 1e-3, 1e-3}, 14, minLevel);
 
- event eject_velocity (i++) {
+}
+
+/*  event eject_velocity (i++) {
   double jet_vel;
   double temp = max_height;
   double gap = 1e-6;
@@ -486,7 +519,7 @@ event adapt (i++) {
   fprintf(fp_jet_vel,"%g %g %g %g\n", temp,interpolate(u.x,temp,0),jet_vel,t);
 
 
-} 
+}  */
 
 /* event gfsview (t = 0.0; t += 0.1; t <= tEnd) {
     char name_gfs[200];
@@ -497,10 +530,10 @@ event adapt (i++) {
     fclose(fp_gfs);
 } */
 
-event saveInterfaces (t = 0.0; t += 0.1; t <= tEnd) {
+event saveInterfaces (t = 0.0; t += 0.01; t <= tEnd) {
     char nameInterfaces1[200];
 
-    sprintf(nameInterfaces1,"Interfaces/interfaceDrop-%0.1f.dat",t);
+    sprintf(nameInterfaces1,"Interfaces/interfaceDrop-%0.2f.dat",t);
 
     FILE * fp1 = fopen(nameInterfaces1, "w");
     output_facets (f, fp1);	
@@ -513,6 +546,15 @@ event saveInterfaces (t = 0.0; t += 0.1; t <= tEnd) {
     FILE * fp2 = fopen(nameInterfaces2, "w");
     output_facets (f2, fp2);	
     fclose(fp2); */
+} 
+event loginterface (i += 1) {
+
+  scalar posX[],posY[];
+  position (f, posX, {1,0}); // (1,0) indicates the unit vector in the x-direction
+  position (f, posY, {0,1}); // (0,1) indicates the unit vector in the y-direction
+
+  fprintf(fp_interface, "%i %g %1.4f %1.4f %1.4f %1.4f %1.4f %1.4f\n", i, t, statsf(f).sum, statsf(posX).min, statsf(posX).max, statsf(posY).min, statsf(posY).max,interpolate(u.x,statsf(posX).max,0));
+  fflush(fp_interface);
 }
 
 /* event extractPressureData (t = 0.0; t += 0.1) {
@@ -567,72 +609,73 @@ event droplets (t += 0.01)
 
 
 // Output animations
-event movies (t += 0.1; t <= tEnd){
+// event movies (t += 0.01; t <= tEnd){
+//
+//  char timestring[100];
+//  
+//  foreach(){
+//	omega[] = (u.y[1,0] - u.y[-1,0])/(2.*Delta) - (u.x[0,1] - u.x[0,-1])/(2.*Delta);
+//        velnorm[] = sqrt(sq(u.x[]) + sq(u.y[]));
+//  	viewingfield[] = 1.0 - f[];// - 0.5*f2[];
+//  	mylevel[] = level;
+//  }
+//
+//  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
+//	
+//  clear();
+//  draw_vof("f", lw=2);
+//  //draw_vof("f2", lw=2);
+//  squares("viewingfield", map = cool_warm, min = -0.5, max = 2.5);
+//  mirror({0,1}) {
+//	draw_vof("f", lw=2);
+//	//draw_vof("f2", lw=2);		
+//	cells(lw=0.5);
+//	squares("mylevel", map = cool_warm, min = minLevel, max = maxLevel);
+//  } 
+//
+//  sprintf(timestring, "t=%2.03f",t);
+//  draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
+//  
+//  save ("Animations/ImpactSummary.mp4"); 
+//
+//  
+//  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
+//  clear();
+//  
+//  draw_vof("f", lw=2);
+//  draw_vof("f2", lw=2);
+//  squares("u.x", map = cool_warm, min = -1., max = 0.5,);
+//  mirror({0,1}) {
+//	draw_vof("f", lw=2);
+//	draw_vof("f2", lw=2);		
+//	squares("u.y", map = cool_warm, min = -0.5, max = 2.);
+//  } 
+//
+//  sprintf(timestring, "t=%2.03f",t);
+//  draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
+//  
+//  save ("Animations/ImpactVelocities.mp4"); 
+//
+//  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
+//  clear();
+//  
+//  draw_vof("f", lw=2);
+//  draw_vof("f2", lw=2);
+//  squares("omega", map = cool_warm, min = -3., max = 3.);
+//  mirror({0,1}) {
+//	draw_vof("f", lw=2);
+//	draw_vof("f2", lw=2);	
+//	squares("p", map = cool_warm, min = -0.25, max = 4.0);
+//  } 
+//
+//  sprintf(timestring, "t=%2.03f",t);
+//  draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
+//  
+//  save ("Animations/ImpactPVort.mp4"); 
+//  
+//} 
 
-  char timestring[100];
-  
-  foreach(){
-	omega[] = (u.y[1,0] - u.y[-1,0])/(2.*Delta) - (u.x[0,1] - u.x[0,-1])/(2.*Delta);
-        velnorm[] = sqrt(sq(u.x[]) + sq(u.y[]));
-  	viewingfield[] = 1.0 - f[];// - 0.5*f2[];
-  	mylevel[] = level;
-  }
-
-  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
-	
-  clear();
-  draw_vof("f", lw=2);
-  //draw_vof("f2", lw=2);
-  squares("viewingfield", map = cool_warm, min = -0.5, max = 2.5);
-  mirror({0,1}) {
-	draw_vof("f", lw=2);
-	//draw_vof("f2", lw=2);		
-	cells(lw=0.5);
-	squares("mylevel", map = cool_warm, min = minLevel, max = maxLevel);
-  } 
-
-  sprintf(timestring, "t=%2.03f",t);
-  draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
-  
-  save ("Animations/ImpactSummary.mp4");
-  /*
-  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });;
-  clear();
-  
-  draw_vof("f", lw=2);
-  draw_vof("f2", lw=2);
-  squares("u.x", map = cool_warm, min = -1., max = 0.5,);
-  mirror({0,1}) {
-	draw_vof("f", lw=2);
-	draw_vof("f2", lw=2);		
-	squares("u.y", map = cool_warm, min = -0.5, max = 2.);
-  } 
-
-  sprintf(timestring, "t=%2.03f",t);
-  draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
-  
-  save ("Animations/ImpactVelocities.mp4"); 
-
-  view(width=1900, height=1050, fov=7.0, ty = 0.0, quat = { 0, 0, -0.707, 0.707 });
-  clear();
-  
-  draw_vof("f", lw=2);
-  draw_vof("f2", lw=2);
-  squares("omega", map = cool_warm, min = -3., max = 3.);
-  mirror({0,1}) {
-	draw_vof("f", lw=2);
-	draw_vof("f2", lw=2);	
-	squares("p", map = cool_warm, min = -0.25, max = 4.0);
-  } 
-
-  sprintf(timestring, "t=%2.03f",t);
-  draw_string(timestring, pos=1, lc= { 0, 0, 0 }, lw=2);
-  
-  save ("Animations/ImpactPVort.mp4"); 
-  */
-} 
-
-event logstats (t += 0.01) {
+event logstats (t += 0.01; t <= tEnd) {
 
     timing s = timer_timing (perf.gt, i, perf.tnc, NULL);
  
